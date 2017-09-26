@@ -42,14 +42,12 @@ char *get(unsigned int key) {
 	FILE *fp;
 	char *value = (char *) malloc(1000);
 	memcpy(value,&key,sizeof(key));
-	
+	fprintf(stderr, "getting key %.*s\n",4,value);
 	fp = fopen("/sys/kernel/key_value_store/test", "rb");
 	if (!fp) {
-		fprintf(stderr, "can not open file");
+		fprintf(stderr, "can not open file\n");
 	}
-
-
-	fread(value, sizeof(value), 1, fp);
+	fread(value, 1000, 1, fp);
 
 	return value;
 
