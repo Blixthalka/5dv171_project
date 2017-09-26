@@ -31,30 +31,65 @@ static struct kobject* kobj;
 static ssize_t kvs_show(struct kobject *obj, struct kobj_attribute *attr, char *buf)
 {
 	struct kvs_htable_entry *tmp; 
-	int key;
+	unsigned int key;
 
-	if(sscanf(buf, "%du", &key) != 1)
-		return -EINVAL; 
+	memcpy(&key, buf, sizeof(key));
 	
+	printk(KERN_INFO "Fetching key: %du. ", key);
+
 	hash_for_each_possible(kvs_htable, tmp, hash_list, key) {
 		if(key == tmp->key) {
+			printk(KERN_INFO "Found value: %s\n", tmp->value);
 			strcpy(buf, tmp->value);
 			return strlen(buf) + 1;
 		}		
 	}	
 
-	return -ENOENT;
+	printk(KERN_INFO "Did not find any value.");
+	return -EINVAL;
 }
 
 static ssize_t kvs_store(struct kobject *obj, struct kobj_attribute *attr, const char *buf, size_t count)
 {
+	struct kvs_htable_entry *entry;
+	unsigned int key;
+
+	if(count < sizeof(key))
+		return -EINVAL;
+
+	memcpy(&key, buf, sizeof(key));
 	
-	int test = 13;
-	sscanf(buf, "%du", &test);
+	if(count == sizeof(key)) {
+		
+
+	} else {
+	////	add_to_htable();
+	}
+
+	
 	return count;
 }
 
 static struct kobj_attribute test_attribute = __ATTR(test, 0660, kvs_show, kvs_store); 
+
+int add_to_htable(char *buf, size_t count) 
+{
+	struct kvs_htable_entry *entry;
+	unsigned int key;
+
+	entry = kmalloc(sizeof *entry, GFP_KERNEL);
+	if(!entry)
+		return -ENOMEM;
+	entry->value = kmalloc(sizeof(count - sizeof(key)), GFP_KERNEL);
+	memcpy(entry->value, buf + sizeof(key), count - sizeof(key));
+	if(!entry->value) {
+		kfree(entry);
+		return -ENOMEM;
+	}
+	entry->key = key;
+			
+	hash_add(kvs_htable, &entry->hash_list, entry->key);
+}
 
 static int __init kvs_init(void)
 {
