@@ -30,7 +30,7 @@ static struct kobject* kobj;
 
 static ssize_t kvs_show(struct kobject *obj, struct kobj_attribute *attr, char *buf)
 {
-	struct kvs_htable_entry *tmp; 
+	struct kvs_htable_entry *tmp;
 	unsigned int key;
 
 	memcpy(&key, buf, sizeof(key));
