@@ -22,6 +22,7 @@ DEFINE_HASHTABLE(kvs_htable, HASHTABLE_SIZE);
 struct kvs_htable_entry {
 	unsigned int key;
 	char *value;
+	size_t value_size;
 	struct hlist_node hash_list;
 };
 
@@ -35,13 +36,13 @@ static ssize_t kvs_show(struct kobject *obj, struct kobj_attribute *attr, char *
 
 	memcpy(&key, buf, sizeof(key));
 	
-	printk(KERN_INFO "Fetching key: %du. ", key);
+	printk(KERN_INFO "Fetching key: %u. ", key);
 
 	hash_for_each_possible(kvs_htable, tmp, hash_list, key) {
 		if(key == tmp->key) {
 			printk(KERN_INFO "Found value: %s\n", tmp->value);
-			strcpy(buf, tmp->value);
-			return strlen(buf) + 1;
+			memcpy(buf, tmp->value, tmp->value_size);
+			return tmp->value_size;
 		}		
 	}	
 
@@ -60,10 +61,10 @@ static ssize_t kvs_store(struct kobject *obj, struct kobj_attribute *attr, const
 	memcpy(&key, buf, sizeof(key));
 	
 	if(count == sizeof(key)) {
-		
+		//delete__htable(key);
 
 	} else {
-	////	add_to_htable();
+	//	add_to_htable(key, buf + sizeof(key), count - sizeof(key));
 	}
 
 	
@@ -72,21 +73,21 @@ static ssize_t kvs_store(struct kobject *obj, struct kobj_attribute *attr, const
 
 static struct kobj_attribute test_attribute = __ATTR(test, 0660, kvs_show, kvs_store); 
 
-int add_to_htable(char *buf, size_t count) 
+int add_htable(unsigned int key, char *val_buf, size_t count) 
 {
 	struct kvs_htable_entry *entry;
-	unsigned int key;
 
 	entry = kmalloc(sizeof *entry, GFP_KERNEL);
 	if(!entry)
 		return -ENOMEM;
-	entry->value = kmalloc(sizeof(count - sizeof(key)), GFP_KERNEL);
-	memcpy(entry->value, buf + sizeof(key), count - sizeof(key));
+	entry->value_size = count;
+	entry->key = key;
+	entry->value = kmalloc(count, GFP_KERNEL);
+	memcpy(entry->value, val_buf, count);
 	if(!entry->value) {
 		kfree(entry);
 		return -ENOMEM;
 	}
-	entry->key = key;
 			
 	hash_add(kvs_htable, &entry->hash_list, entry->key);
 }
@@ -110,8 +111,10 @@ static int __init kvs_init(void)
 
 	entry = kmalloc(sizeof *entry, GFP_KERNEL);
 	entry->key = 1337;
-	entry->value = kmalloc(strlen(value_str) + 1, GFP_KERNEL);
-	memcpy(entry->value, value_str, strlen(value_str) + 1);
+	entry->value_size = strlen(value_str) + 1;
+	entry->value = kmalloc(entry->value_size, GFP_KERNEL);
+
+	memcpy(entry->value, value_str, value->size);
 
 	hash_add(kvs_htable, &entry->hash_list, entry->key);
 
