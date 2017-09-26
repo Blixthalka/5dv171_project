@@ -35,6 +35,7 @@ int store(char *entry) {
 	}
 
 	fwrite(entry, sizeof(entry), 1, fp);
+	fclose(fp);
 	return 1;
 }
 
@@ -42,14 +43,16 @@ char *get(unsigned int key) {
 	FILE *fp;
 	char *value = (char *) malloc(1000);
 	memcpy(value,&key,sizeof(key));
-	
+
+	unsigned int test_key;
+	memcpy(&test_key, value,sizeof(test_key));
+	fprintf(stderr, "getting key %u\n",test_key);
 	fp = fopen("/sys/kernel/key_value_store/test", "rb");
 	if (!fp) {
-		fprintf(stderr, "can not open file");
+		fprintf(stderr, "can not open file\n");
 	}
-
-
-	fread(value, sizeof(value), 1, fp);
+	fread(value, 1000, 1, fp);
+	fclose(fp);
 
 	return value;
 

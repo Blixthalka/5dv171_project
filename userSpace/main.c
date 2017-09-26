@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
 
 	unsigned int key = 1337;
 
-	insert(key, value,strlen(value)+1);
+	//insert(key, value,strlen(value)+1);
 
 	printf("value = %s\n", get(key));
 
