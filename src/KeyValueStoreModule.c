@@ -20,7 +20,7 @@ DEFINE_HASHTABLE(kvs_htable, HASHTABLE_SIZE);
  * Struct to be stored in hashtable.
  */
 struct kvs_htable_entry {
-	char *key;
+	unsigned int key;
 	char *value;
 	struct hlist_node hash_list;
 };
@@ -31,19 +31,19 @@ static struct kobject* kobj;
 static ssize_t kvs_show(struct kobject *obj, struct kobj_attribute *attr, char *buf)
 {
 	struct kvs_htable_entry *tmp; 
-	unsigned int key;
+	int key;
 
 	if(sscanf(buf, "%du", &key) != 1)
-		return -1; 
+		return -EINVAL; 
 	
-	// finds the table entry with key 1337
-	hash_for_each_possible(kvs_htable, tmp, hash_list, 1337) {
-		strcpy(buf, tmp->value);
-		return strlen(buf);		 
+	hash_for_each_possible(kvs_htable, tmp, hash_list, key) {
+		if(key == tmp->key) {
+			strcpy(buf, tmp->value);
+			return strlen(buf) + 1;
+		}		
 	}	
 
-	// some error, since entry was not found..
-	return -1;
+	return -ENOENT;
 }
 
 static ssize_t kvs_store(struct kobject *obj, struct kobj_attribute *attr, const char *buf, size_t count)
@@ -61,7 +61,6 @@ static int __init kvs_init(void)
     	int error = 0;
 	struct kvs_htable_entry *entry;
 	char *value_str = "Chicken dinner!\n";
-	char *key_str = "Key\n";
 
    	printk(KERN_INFO "Init key-value store.\n");
 
@@ -75,15 +74,11 @@ static int __init kvs_init(void)
 	// check error here instead? 
 
 	entry = kmalloc(sizeof *entry, GFP_KERNEL);
-
+	entry->key = 1337;
 	entry->value = kmalloc(strlen(value_str) + 1, GFP_KERNEL);
 	memcpy(entry->value, value_str, strlen(value_str) + 1);
 
-	entry->key = kmalloc(strlen(key_str) + 1, GFP_KERNEL);
-	memcpy(entry->key, key_str, strlen(key_str) + 1);
-
-	hash_add(kvs_htable, &entry->hash_list, 1337);
-	
+	hash_add(kvs_htable, &entry->hash_list, entry->key);
 
    	return error;
 }
