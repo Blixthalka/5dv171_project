@@ -5,7 +5,7 @@
 
 
 int main(int argc, char *argv[]) {
-	char *value = "Chicken Dinner";
+//	char *value = "Chicken Dinner";
 
 	unsigned int key = 0xffffffff;
 
@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
 
 	printf("value = %s\n", get(key));
 
-
+	return 0;
 }
 
 

@@ -4,6 +4,7 @@
 #include <linux/netlink.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../common/kvs_protocol.h"
 
 #define NETLINK_NITRO 17
 #define MAX_PAYLOAD 2048
@@ -14,6 +15,13 @@ int main() {
     struct nlmsghdr *nlh = NULL;
     struct iovec iov;
     int fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_NITRO);
+
+    char *msgk = "Chicken dinner.";
+    int key = 1337;
+    struct kvs_msg kvs_m = CREATE_KVS_MSG_PUT(key, msgk);
+
+    char buf[400];
+    serialize_kvs_msg(buf, &kvs_m);
 
 /* source address */
     memset(&s_nladdr, 0, sizeof(s_nladdr));
