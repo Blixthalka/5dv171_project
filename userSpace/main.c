@@ -7,7 +7,7 @@
 int main(int argc, char *argv[]) {
 	char *value = "Chicken Dinner";
 
-	unsigned int key = 1337;
+	unsigned int key = 0xffffffff;
 
 	//insert(key, value,strlen(value)+1);
 

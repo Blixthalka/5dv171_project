@@ -1,4 +1,4 @@
-obj-m += KeyValueStoreModule.o
+#obj-m += KeyValueStoreModule.o
 obj-m += netlink_kvs.o
 
 all:
