@@ -18,3 +18,7 @@ void unserialize_kvs_msg(struct kvs_msg *msg, char *buf)
 	msg->key = buf[1] << 24 | buf[2] << 16 | buf[3] <<  8 | buf[4];
 	strcpy(msg->value, &buf[5]);
 }
+
+size_t get_value_length(char* buf){
+	return strlen(&buf[5]) + 1;
+}
