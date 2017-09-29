@@ -9,6 +9,11 @@
 
 
 int main() {
+    struct kvs_connection connection;
+    kvs_connection_init(&connection);
+
+    kvs_put(connection, 1337, "Chicken dinner.");
+
     return 0;
 }
 
@@ -85,5 +90,5 @@ void kvs_send_msg(struct kvs_connection *connection, struct kvs_msg *user_msg)
     sendmsg(connection->fd, &msg, 0);
 
     free(serialized_msg);
-    
+
 }
