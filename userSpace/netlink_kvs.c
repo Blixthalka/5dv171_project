@@ -5,59 +5,89 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../common/kvs_protocol.h"
+#include "netlink_kvs.h"
 
-#define NETLINK_NITRO 17
-#define MAX_PAYLOAD 2048
 
 int main() {
-    struct sockaddr_nl s_nladdr, d_nladdr;
+    struct kvs_connection connection;
+    kvs_connection_init(&connection);
+
+    kvs_put(connection, 1337, "Chicken dinner.");
+
+    return 0;
+}
+
+
+void kvs_connection_init(struct kvs_connection *connection)
+{
+    connection->fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_KVS);
+
+    memset(&connection->src_addr, 0, sizeof(connection->src_addr));
+    connection->src_addr.nl_family = AF_NETLINK;
+    connection->src_addr.nl_pad    = 0;
+    connection->src_addr.nl_pid    = getpid();
+
+    bind(connection->fd, (struct sockaddr *) &connection->src_addr, sizeof(connection->src_addr));
+
+    memset(&connection->dest_addr, 0, sizeof(connection->dest_addr));
+    connection->dest_addr.nl_family = AF_NETLINK;
+    connection->dest_addr.nl_pad    = 0;
+    connection->dest_addr.nl_pid    = 0; /* to kernel */
+}
+
+void kvs_connection_close(struct kvs_connection *connection)
+{
+    close(connection->fd);
+}
+
+void kvs_put(struct kvs_connection *connection, int key, char *value)
+{
+    struct kvs_msg msg = CREATE_KVS_MSG_PUT(key, value);
+    kvs_send_msg(connection, &msg);
+}
+
+void kvs_get(struct kvs_connection *connection, int key, char *value)
+{
+    struct kvs_msg msg = CREATE_KVS_MSG_GET(key, value);
+    kvs_send_msg(connection, &msg);
+}
+
+void kvs_del(struct kvs_connection *connection, int key)
+{
+    struct kvs_msg msg = CREATE_KVS_MSG_DEL(key);
+    kvs_send_msg(connection, &msg);
+}
+
+void kvs_send_msg(struct kvs_connection *connection, struct kvs_msg *user_msg)
+{
     struct msghdr msg;
     struct nlmsghdr *nlh = NULL;
     struct iovec iov;
-    int fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_NITRO);
+    size_t kvs_msg_size  = sizeof(struct kvs_msg) + strlen(user_msg->value) + 1;
+    size_t full_msg_size = sizeof(struct nlmsghdr) + kvs_msg_size;
 
-    char *msgk = "Chicken dinner.";
-    int key = 1337;
-    struct kvs_msg kvs_m = CREATE_KVS_MSG_PUT(key, msgk);
+    char *serialized_msg = (char *) malloc(kvs_msg_size);
+    serialize_kvs_msg(serialized_msg, user_msg);
 
-    char buf[400];
-    serialize_kvs_msg(buf, &kvs_m);
 
-/* source address */
-    memset(&s_nladdr, 0, sizeof(s_nladdr));
-    s_nladdr.nl_family = AF_NETLINK;
-    s_nladdr.nl_pad = 0;
-    s_nladdr.nl_pid = getpid();
-    bind(fd, (struct sockaddr *) &s_nladdr, sizeof(s_nladdr));
-
-/* destination address */
-    memset(&d_nladdr, 0, sizeof(d_nladdr));
-    d_nladdr.nl_family = AF_NETLINK;
-    d_nladdr.nl_pad = 0;
-    d_nladdr.nl_pid = 0; /* destined to kernel */
-
-/* Fill the netlink message header */
-    nlh = (struct nlmsghdr *) malloc(100);
-    memset(nlh, 0, 100);
-    strcpy(NLMSG_DATA(nlh), " Mr. Kernel, Are you ready ?");
-    nlh->nlmsg_len = 100;
+    /* Fill the netlink message header */
+    nlh = (struct nlmsghdr *) malloc(full_msg_size);
+    memset(nlh, 0, full_msg_size);
+    memcpy(NLMSG_DATA(nlh), serialized_msg, kvs_msg_size);
+    nlh->nlmsg_len = full_msg_size;
     nlh->nlmsg_pid = getpid();
     nlh->nlmsg_flags = 1;
     nlh->nlmsg_type = 0;
 
-/*iov structure */
-
     iov.iov_base = (void *) nlh;
     iov.iov_len = nlh->nlmsg_len;
 
-/* msg */
     memset(&msg, 0, sizeof(msg));
-    msg.msg_name = (void *) &d_nladdr;
-    msg.msg_namelen = sizeof(d_nladdr);
+    msg.msg_name = (void *) &connection->dest_addr;
+    msg.msg_namelen = sizeof(connection->dest_addr);
     msg.msg_iov = &iov;
     msg.msg_iovlen = 1;
-    sendmsg(fd, &msg, 0);
+    sendmsg(connection->fd, &msg, 0);
 
-    close(fd);
-    return (EXIT_SUCCESS);
+    free(serialized_msg);
 }
