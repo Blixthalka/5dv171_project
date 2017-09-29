@@ -29,7 +29,7 @@ void kvs_connection_init(struct kvs_connection *connection)
 
     bind(connection->fd, (struct sockaddr *) &connection->src_addr, sizeof(connection->src_addr));
 
-    memset(&d_nladdr, 0, sizeof(d_nladdr));
+    memset(&connection->dest_addr, 0, sizeof(connection->dest_addr));
     connection->dest_addr.nl_family = AF_NETLINK;
     connection->dest_addr.nl_pad    = 0;
     connection->dest_addr.nl_pid    = 0; /* to kernel */
@@ -37,25 +37,25 @@ void kvs_connection_init(struct kvs_connection *connection)
 
 void kvs_connection_close(struct kvs_connection *connection)
 {
-    close(fd);
+    close(connection->fd);
 }
 
 void kvs_put(struct kvs_connection *connection, int key, char *value)
 {
     struct kvs_msg msg = CREATE_KVS_MSG_PUT(key, value);
-    kvs_send_msg(connection, msg);
+    kvs_send_msg(connection, &msg);
 }
 
 void kvs_get(struct kvs_connection *connection, int key, char *value)
 {
     struct kvs_msg msg = CREATE_KVS_MSG_GET(key, value);
-    kvs_send_msg(connection, msg);
+    kvs_send_msg(connection, &msg);
 }
 
 void kvs_del(struct kvs_connection *connection, int key)
 {
-    struct kvs_msg msg = CREATE_KVS_MSG_DEL(key, value);
-    kvs_send_msg(connection, msg);
+    struct kvs_msg msg = CREATE_KVS_MSG_DEL(key);
+    kvs_send_msg(connection, &msg);
 }
 
 void kvs_send_msg(struct kvs_connection *connection, struct kvs_msg *user_msg)
@@ -63,16 +63,16 @@ void kvs_send_msg(struct kvs_connection *connection, struct kvs_msg *user_msg)
     struct msghdr msg;
     struct nlmsghdr *nlh = NULL;
     struct iovec iov;
-    size_t kvs_msg_size  = sizeof(kvs_msg) + strlen(user_msg->value) + 1;
-    size_t full_msg_size = sizeof(nlmsghdr) + kvs_msg_size;
+    size_t kvs_msg_size  = sizeof(struct kvs_msg) + strlen(user_msg->value) + 1;
+    size_t full_msg_size = sizeof(struct nlmsghdr) + kvs_msg_size;
 
     char *serialized_msg = (char *) malloc(kvs_msg_size);
-    serialize_kvs_msg(serialized_msg, kvs_msg);
+    serialize_kvs_msg(serialized_msg, user_msg);
 
 
     /* Fill the netlink message header */
     nlh = (struct nlmsghdr *) malloc(full_msg_size);
-    memset(nlh, 0, msg_size);
+    memset(nlh, 0, full_msg_size);
     memcpy(NLMSG_DATA(nlh), serialized_msg, kvs_msg_size);
     nlh->nlmsg_len = full_msg_size;
     nlh->nlmsg_pid = getpid();
@@ -90,5 +90,4 @@ void kvs_send_msg(struct kvs_connection *connection, struct kvs_msg *user_msg)
     sendmsg(connection->fd, &msg, 0);
 
     free(serialized_msg);
-
 }

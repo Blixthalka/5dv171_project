@@ -2,6 +2,8 @@
 #define INC_5DV171_PROJECT_NETLINK_KVS_H
 
 #include <linux/netlink.h>
+#include "../common/kvs_protocol.h"
+
 
 #define NETLINK_KVS 17
 #define MAX_PAYLOAD 2048

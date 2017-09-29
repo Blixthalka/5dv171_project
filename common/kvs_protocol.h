@@ -26,10 +26,10 @@ struct kvs_msg {
 	.value = _value,				\
 }
 
-#define CREATE_KVS_MSG_DEL(_key, _value)  { 	 	\
+#define CREATE_KVS_MSG_DEL(_key)  { 	 		\
 	.command = KVS_COMMAND_DEL,			\
 	.key = _key,					\
-	.value = _value,				\
+	.value = NULL,					\
 }
 
 
