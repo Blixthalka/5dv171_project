@@ -30,6 +30,11 @@ void kvs_connection_init(struct kvs_connection *connection)
     connection->dest_addr.nl_pid    = 0; /* to kernel */
 }
 
+void kvs_connection_close(struct kvs_connection *connection)
+{
+    close(fd);
+}
+
 void kvs_put(struct kvs_connection *connection, int key, char *value)
 {
     struct kvs_msg msg = CREATE_KVS_MSG_PUT(key, value);
@@ -53,13 +58,18 @@ void kvs_send_msg(struct kvs_connection *connection, struct kvs_msg *user_msg)
     struct msghdr msg;
     struct nlmsghdr *nlh = NULL;
     struct iovec iov;
+    size_t kvs_msg_size  = sizeof(kvs_msg) + strlen(user_msg->value) + 1;
+    size_t full_msg_size = sizeof(nlmsghdr) + kvs_msg_size;
+
+    char *serialized_msg = (char *) malloc(kvs_msg_size);
+    serialize_kvs_msg(serialized_msg, kvs_msg);
 
 
     /* Fill the netlink message header */
-    nlh = (struct nlmsghdr *) malloc(100);
-    memset(nlh, 0, 100);
-    strcpy(NLMSG_DATA(nlh), " Mr. Kernel, Are you ready ?");
-    nlh->nlmsg_len = 100;
+    nlh = (struct nlmsghdr *) malloc(full_msg_size);
+    memset(nlh, 0, msg_size);
+    memcpy(NLMSG_DATA(nlh), serialized_msg, kvs_msg_size);
+    nlh->nlmsg_len = full_msg_size;
     nlh->nlmsg_pid = getpid();
     nlh->nlmsg_flags = 1;
     nlh->nlmsg_type = 0;
@@ -68,9 +78,12 @@ void kvs_send_msg(struct kvs_connection *connection, struct kvs_msg *user_msg)
     iov.iov_len = nlh->nlmsg_len;
 
     memset(&msg, 0, sizeof(msg));
-    msg.msg_name = (void *) &d_nladdr;
-    msg.msg_namelen = sizeof(d_nladdr);
+    msg.msg_name = (void *) &connection->dest_addr;
+    msg.msg_namelen = sizeof(connection->dest_addr);
     msg.msg_iov = &iov;
     msg.msg_iovlen = 1;
     sendmsg(connection->fd, &msg, 0);
+
+    free(serialized_msg);
+    
 }

@@ -2,6 +2,8 @@
 #define _KVS_PROTOCOL_H
 
 #include <stdlib.h>
+
+
 #define KVS_COMMAND_PUT 0x00
 #define KVS_COMMAND_GET 0x01
 #define KVS_COMMAND_DEL 0x02
@@ -42,6 +44,7 @@ void serialize_kvs_msg(char *buf, struct kvs_msg *msg);
 void unserialize_kvs_msg(struct kvs_msg *msg, char *buf);
 
 size_t get_value_length(char* buf);
+
 
 
 #endif /* _KVS_PROTOCOL_H */
