@@ -3,6 +3,7 @@
 #include <sys/socket.h>
 #include <linux/netlink.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include "../common/kvs_protocol.h"
 #include "netlink_kvs.h"
@@ -64,11 +65,22 @@ void kvs_send_msg(struct kvs_connection *connection, struct kvs_msg *user_msg)
     struct msghdr msg;
     struct nlmsghdr *nlh = NULL;
     struct iovec iov;
-    size_t kvs_msg_size  = sizeof(struct kvs_msg) + strlen(user_msg->value) + 1;
+    size_t kvs_msg_size  = sizeof(struct kvs_msg) + user_msg->value_size;
     size_t full_msg_size = sizeof(struct nlmsghdr) + kvs_msg_size;
     char *serialized_msg = (char *) malloc(kvs_msg_size);
-    
+    int i;
+    struct kvs_msg msggg;
+
     serialize_kvs_msg(serialized_msg, user_msg);
+    
+    for(i = 0; i < kvs_msg_size; i++) {
+	printf("%02X-", serialized_msg[i]);
+    }
+
+    printf("\n");
+    msggg.value = malloc(user_msg->value_size);
+    unserialize_kvs_msg(&msggg, serialized_msg);
+    printf(" %02X %d %d %s", msggg.command, msggg.key, msggg.value_size, msggg.value);
 
     /* create netlink message header */
     nlh = (struct nlmsghdr *) malloc(full_msg_size);
