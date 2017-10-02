@@ -80,7 +80,7 @@ int table_put(struct kvs_msg *message, size_t length){
 		return -ENOMEM;
 	}
 	entry->value = kmalloc(length,GFP_KERNEL);
-	memcpy(entry->value,message->value,message->size);
+	memcpy(entry->value,message->value,message->value_size);
 	if(!entry->value){
 		printk(KERN_INFO "FAILED\n");
 		kfree(entry);
