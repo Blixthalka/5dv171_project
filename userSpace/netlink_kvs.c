@@ -12,7 +12,7 @@ int main() {
     struct kvs_connection connection;
     kvs_connection_init(&connection);
 
-    kvs_put(connection, 1337, "Chicken dinner.");
+    kvs_put(&connection, 1337, "Chicken dinner.");
 
     return 0;
 }
