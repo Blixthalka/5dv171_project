@@ -120,6 +120,7 @@ int table_get(struct kvs_msg *message, struct nlmsghdr *nlh){
 			kvs_msg *send_msg = (kvs_msg*)kmalloc(sizeof(kvs_msg),GFP_KERNEL);
 			send_msg->value = kmalloc(strlen(temp->value)+1,GFP_KERNEL);
 			send_msg->value=temp->value;
+			send_msg->value_size=temp->value_size;
 			send_msg->key=temp->key;
 			send_msg->command=KVS_COMMAND_GET;
 			send_message(send_msg,nlh);
