@@ -1,7 +1,8 @@
 #ifndef _KVS_PROTOCOL_H
 #define _KVS_PROTOCOL_H
 
-#include <stdlib.h>
+
+#include <linux/types.h>
 
 
 #define KVS_COMMAND_PUT 0x00
