@@ -36,10 +36,10 @@ size_t get_value_length(char* buf)
 
 void print_kvs_msg(struct kvs_msg *msg) 
 {
-   int i;
 #ifdef __KERNEL__
    printk(KERN_INFO "Command: %02X, Key: %d, Value length %d.\n", msg->command, msg->key, msg->value_size);
 #else
+   int i;
    printf("Command: %02X, Key: %d, Value length: %d.\n", msg->command, msg->key, msg->value_size);
    printf("Buffer: ");
    for(i = 0; i < msg->value_size; i++) {

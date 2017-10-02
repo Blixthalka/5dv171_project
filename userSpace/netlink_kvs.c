@@ -9,6 +9,15 @@
 #include "netlink_kvs.h"
 
 
+/**
+ * Sends the kvs message through the connection to the kernel, where it is handled.
+ * @param connection The connection to the kernel.
+ * @param msg The message to be sent.
+ * @param ret The message to be filled with the answer from the kvs.
+ */
+void kvs_send_msg(struct kvs_connection *connection, struct kvs_msg *user_msg, struct kvs_msg *ret);
+
+
 int main() {
     struct kvs_connection connection;
     struct kvs_msg ret;
@@ -79,12 +88,6 @@ int kvs_del(struct kvs_connection *connection, int key)
 }
 
 
-/**
- * Sends the kvs message through the connection to the kernel, where it is handled.
- * @param connection The connection to the kernel.
- * @param msg The message to be sent.
- * @param ret The message to be filled with the answer from the kvs.
- */
 void kvs_send_msg(struct kvs_connection *connection, struct kvs_msg *user_msg, struct kvs_msg *ret)
 {
     struct msghdr msg;

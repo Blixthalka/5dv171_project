@@ -73,6 +73,6 @@ void unserialize_kvs_msg(struct kvs_msg *msg, char *buf);
 size_t get_value_length(char *buf);
 
 
-void kvs_msg_print(struct kvs_msg *msg);
+void print_kvs_msg(struct kvs_msg *msg);
 
 #endif /* _KVS_PROTOCOL_H */
