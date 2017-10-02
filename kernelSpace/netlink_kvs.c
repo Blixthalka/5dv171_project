@@ -80,7 +80,7 @@ int table_put(struct kvs_msg *message, size_t length){
 		return -ENOMEM;
 	}
 	entry->value = kmalloc(length,GFP_KERNEL);
-	entry->value = message->value;
+	memcpy(entry->value,message->value,message->value_size);
 	if(!entry->value){
 		printk(KERN_INFO "FAILED\n");
 		kfree(entry);
@@ -121,8 +121,8 @@ int table_get(struct kvs_msg *message, struct nlmsghdr *nlh){
 		if(message->key == temp->key){
 			printk(KERN_INFO "found value %s\n",temp->value);
 			send_msg = (struct kvs_msg*)kmalloc(sizeof(send_msg),GFP_KERNEL);
-			send_msg->value = kmalloc(strlen(temp->value)+1,GFP_KERNEL);
-			send_msg->value=temp->value;
+			send_msg->value = kmalloc(temp->value_size,GFP_KERNEL);
+			memcpy(send_msg->value,temp->value,temp->value_size);
 			send_msg->value_size=temp->value_size;
 			send_msg->key=temp->key;
 			send_msg->command=KVS_COMMAND_GET;
