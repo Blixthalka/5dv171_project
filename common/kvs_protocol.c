@@ -1,5 +1,4 @@
 #include "kvs_protocol.h"
-#include <string.h>
      
 void serialize_kvs_msg(char *buf, struct kvs_msg *msg) 
 {
@@ -7,18 +6,23 @@ void serialize_kvs_msg(char *buf, struct kvs_msg *msg)
 	buf[1] = msg->key >> 24;
 	buf[2] = msg->key >> 16;
 	buf[3] = msg->key >>  8;
-	buf[4] = msg->key;
+	buf[4] = msg->value_size;
+	buf[5] = msg->value_size >> 24;
+	buf[6] = msg->value_size >> 16;
+	buf[7] = msg->value_size >>  8;
+	buf[8] = msg->value_size;
 
-	strcpy(&buf[5], msg->value);
+	memcpy(&buf[9], msg->value, msg->value_size);
 }
   
 void unserialize_kvs_msg(struct kvs_msg *msg, char *buf) 
 {
 	msg->command = buf[0];
-	msg->key = buf[1] << 24 | buf[2] << 16 | buf[3] <<  8 | buf[4];
+	msg->key        = buf[1] << 24 | buf[2] << 16 | buf[3] <<  8 | buf[4];
+	msg->value_size = buf[5] << 24 | buf[6] << 16 | buf[7] <<  8 | buf[8];
 	strcpy(msg->value, &buf[5]);
 }
 
 size_t get_value_length(char* buf){
-	return strlen(&buf[5]) + 1;
+	return buf[5] << 24 | buf[6] << 16 | buf[7] <<  8 | buf[8];
 }

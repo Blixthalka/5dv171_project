@@ -12,25 +12,29 @@
 struct kvs_msg {
 	char 	command;
 	int 	key;
+	int 	value_size;
 	char *  value;
 };
 
-#define CREATE_KVS_MSG_PUT(_key, _value)  { 	 	\
-	.command = KVS_COMMAND_PUT,			\
-	.key = _key,					\
-	.value = _value,				\
+#define CREATE_KVS_MSG_PUT(_key, _value, _value_size)  { 	\
+	.command = KVS_COMMAND_PUT,								\
+	.key = _key,											\
+	.value_size = _value_size, 								\
+	.value = _value,										\
 }
 
-#define CREATE_KVS_MSG_GET(_key, _value) { 	 	\
-	.command = KVS_COMMAND_GET,			\
-	.key = _key,					\
-	.value = _value,				\
+#define CREATE_KVS_MSG_GET(_key, _value, _value_size) { 	\
+	.command = KVS_COMMAND_GET,								\
+	.key = _key,											\
+	.value_size = _value_size, 								\
+	.value = _value,										\
 }
 
-#define CREATE_KVS_MSG_DEL(_key)  { 	 		\
-	.command = KVS_COMMAND_DEL,			\
-	.key = _key,					\
-	.value = NULL,					\
+#define CREATE_KVS_MSG_DEL(_key, _value_size)  { 	 		\
+	.command = KVS_COMMAND_DEL,								\
+	.key = _key,											\
+	.value_size = _value_size, 								\
+	.value = NULL,											\
 }
 
 
