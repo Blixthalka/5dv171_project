@@ -33,18 +33,22 @@ int send_message(struct kvs_msg *msg, struct nlmsghdr *nlh);
 static struct sock *nl_sk = NULL;
 
 static void nl_data_ready_callback(struct sk_buff *skb) {
-
 	struct nlmsghdr *nlh = NULL;
+	struct kvs_msg *message;
+	size_t value_length;
+	char* buf;
+
 	if (skb == NULL) {
 		printk("skb is NULL \n");
 		return;
 	}
 	nlh = (struct nlmsghdr *) skb->data;
+	buf=(char*)nlmsg_data(nlh);
 
-	struct kvs_msg *message = (struct kvs_msg *) kmalloc(sizeof(kvs_msg),GFP_KERNEL);
-	size_t value_length = get_value_length(sk_buff);
+	message = (struct kvs_msg *) kmalloc(sizeof(message),GFP_KERNEL);
+	value_length = get_value_length(buf);
 	message->value = kmalloc(sizeof(value_length), GFP_KERNEL);
-	unserialize_kvs_msg(message,sk_buff);
+	unserialize_kvs_msg(message,buf);
 
 
 	if(message->command==KVS_COMMAND_PUT){
@@ -67,9 +71,10 @@ static void nl_data_ready_callback(struct sk_buff *skb) {
 }
 
 int table_put(struct kvs_msg *message, size_t length){
-	printk(KERN_INFO "storing value %s with key %u ...",message->value,message->key);
 	struct kvs_htable_entry *entry;
 	entry = kmalloc(sizeof(*entry),GFP_KERNEL);
+	
+	printk(KERN_INFO "storing value %s with key %u ...",message->value,message->key);
 	if(!entry){
 		printk(KERN_INFO "FAILED\n");
 		return -ENOMEM;
@@ -91,13 +96,12 @@ int table_put(struct kvs_msg *message, size_t length){
 }
 
 int table_del(struct kvs_msg *message){
-	int table_get(kvs_msg *message){
-		printk(KERN_INFO "deleting key %u ...",message->key);
 		struct kvs_htable_entry *temp;
 
-		hash_for_each_possible(kvs_htable,temp,hashlist,message->key){
+		printk(KERN_INFO "deleting key %u ...",message->key);
+		hash_for_each_possible(kvs_htable,temp,hash_list,message->key){
 			if(message->key == temp->key){
-				hash_del(temp);
+				hash_del(&temp->hash_list);
 				kfree(temp->value);
 				kfree(temp);
 				printk(KERN_INFO "key deleted\n",temp->value);
@@ -106,18 +110,17 @@ int table_del(struct kvs_msg *message){
 		}
 		printk(KERN_INFO "did not find key\n");
 		return -1;
-	}
-
 }
 
 int table_get(struct kvs_msg *message, struct nlmsghdr *nlh){
-	printk(KERN_INFO "getting value from key %u ...",message->key);
 	struct kvs_htable_entry *temp;
+	struct kvs_msg *send_msg;
 
-	hash_for_each_possible(kvs_htable,temp,hashlist,message->key){
+	printk(KERN_INFO "getting value from key %u ...",message->key);
+	hash_for_each_possible(kvs_htable,temp,hash_list,message->key){
 		if(message->key == temp->key){
 			printk(KERN_INFO "found value %s\n",temp->value);
-			kvs_msg *send_msg = (kvs_msg*)kmalloc(sizeof(kvs_msg),GFP_KERNEL);
+			send_msg = (struct kvs_msg*)kmalloc(sizeof(send_msg),GFP_KERNEL);
 			send_msg->value = kmalloc(strlen(temp->value)+1,GFP_KERNEL);
 			send_msg->value=temp->value;
 			send_msg->value_size=temp->value_size;
@@ -138,9 +141,12 @@ int send_message(struct kvs_msg *msg, struct nlmsghdr *nlh){
 	struct sk_buff *skb_out;
 	int pid;
 	int res;
+	size_t size;
+	char* buf;
+
 	pid = nlh->nlmsg_pid;
-	size_t size = sizeof(msg) + strlen(msg->value) +1;
-	char* buf = kmalloc(size);
+	size = sizeof(msg) + msg->value_size;
+	buf = kmalloc(size,GFP_KERNEL);
 	serialize_kvs_msg(buf,msg);
 	skb_out = nlmsg_new(size, 0);
 	if (!skb_out) {
@@ -148,7 +154,7 @@ int send_message(struct kvs_msg *msg, struct nlmsghdr *nlh){
 		return -ENOMEM;
 	}
 
-	nlh = nlmsg_put(skb_out, 0, 0, NLMSG_DONE, msg_size, 0);
+	nlh = nlmsg_put(skb_out, 0, 0, NLMSG_DONE, size, 0);
 	NETLINK_CB(skb_out).dst_group = 0; /* not in mcast group */
 	strncpy(nlmsg_data(nlh), buf, size);
 
@@ -167,7 +173,7 @@ static void netlink_test(void) {
 	struct netlink_kernel_cfg cfg = {
 		.input = nl_data_ready_callback,
 	};
-	nl_sk = netlink_kernel_create(&init_net, NETLINK_NITRO, &cfg);
+	nl_sk = netlink_kernel_create(&init_net, NETLINK_KVS, &cfg);
 	// nl_sk = netlink_kernel_create(&init_net, NETLINK_NITRO, 0, nl_data_ready_callback, NULL, THIS_MODULE);
 }
 

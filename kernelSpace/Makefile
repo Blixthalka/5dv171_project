@@ -1,20 +1,5 @@
-#obj-m += KeyValueStoreModule.o
-#MODULE_NAME = key_value_store
-#
-#SRC := netlink_kvs.c ../common/kvs_protocol.c ../common/kvs_protocol.h
-#
-#KDIR := $(shell pwd)
-#
-#$(MODULE_NAME)-objs = $(SRC:.c=.o)
-#
-#obj-m := $(MODULE_NAME).o
-#PWD := $(shell pwd)
-#
-#all:
-#	$(MAKE) -C $(KDIR) m=$(PWD) modules
-
-obj-m += netlink_kvsko.o
-netlink_kvsko-objs := ../common/kvs_protocol.o netlink_kvs.o
+obj-m += key_value_store.o
+key_value_store-objs := ../common/kvs_protocol.o netlink_kvs.o
 KVERSION := $(shell uname -r)
 PWD := $(shell pwd)
 
