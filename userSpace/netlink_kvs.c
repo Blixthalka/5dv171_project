@@ -11,8 +11,9 @@
 int main() {
     struct kvs_connection connection;
     kvs_connection_init(&connection);
+    char *value = "chicken dinner";
 
-    kvs_put(&connection, 1337, "Chicken dinner.");
+    kvs_put(&connection, 1337, value, strlen(value) + 1);
 
     return 0;
 }
@@ -40,15 +41,15 @@ void kvs_connection_close(struct kvs_connection *connection)
     close(connection->fd);
 }
 
-void kvs_put(struct kvs_connection *connection, int key, char *value)
+void kvs_put(struct kvs_connection *connection, int key, char *value, int value_size)
 {
-    struct kvs_msg msg = CREATE_KVS_MSG_PUT(key, value);
+    struct kvs_msg msg = CREATE_KVS_MSG_PUT(key, value, value_size);
     kvs_send_msg(connection, &msg);
 }
 
-void kvs_get(struct kvs_connection *connection, int key, char *value)
+void kvs_get(struct kvs_connection *connection, int key, char *value, int value_size)
 {
-    struct kvs_msg msg = CREATE_KVS_MSG_GET(key, value);
+    struct kvs_msg msg = CREATE_KVS_MSG_GET(key, value, value_size);
     kvs_send_msg(connection, &msg);
 }
 
@@ -65,12 +66,11 @@ void kvs_send_msg(struct kvs_connection *connection, struct kvs_msg *user_msg)
     struct iovec iov;
     size_t kvs_msg_size  = sizeof(struct kvs_msg) + strlen(user_msg->value) + 1;
     size_t full_msg_size = sizeof(struct nlmsghdr) + kvs_msg_size;
-
     char *serialized_msg = (char *) malloc(kvs_msg_size);
+    
     serialize_kvs_msg(serialized_msg, user_msg);
 
-
-    /* Fill the netlink message header */
+    /* create netlink message header */
     nlh = (struct nlmsghdr *) malloc(full_msg_size);
     memset(nlh, 0, full_msg_size);
     memcpy(NLMSG_DATA(nlh), serialized_msg, kvs_msg_size);
