@@ -10,6 +10,8 @@
 #define KVS_COMMAND_PUT 0x00
 #define KVS_COMMAND_GET 0x01
 #define KVS_COMMAND_DEL 0x02
+#define KVS_COMMAND_SUC 0x03
+#define KVS_COMMAND_ERR 0x04
 
 struct kvs_msg {
 	char 	command;
