@@ -144,6 +144,7 @@ int table_get(struct kvs_msg *message, struct nlmsghdr *nlh){
 			printk(KERN_INFO "found value %s\n",temp->value);
 			send_msg = (struct kvs_msg*)kmalloc(sizeof(send_msg),GFP_KERNEL);
 			send_msg->value = kmalloc(temp->value_size,GFP_KERNEL);
+
 			memcpy(send_msg->value,temp->value,temp->value_size);
 			send_msg->value_size=temp->value_size;
 			send_msg->key=temp->key;
@@ -185,7 +186,7 @@ int send_message(struct kvs_msg *msg, struct nlmsghdr *nlh){
 
 	nlh = nlmsg_put(skb_out, 0, 0, NLMSG_DONE, size, 0);
 	NETLINK_CB(skb_out).dst_group = 0; /* not in mcast group */
-	strncpy(nlmsg_data(nlh), buf, size);
+	memcpy(nlmsg_data(nlh), buf, size);
 
 	res = nlmsg_unicast(nl_sk, skb_out, pid);
 	if (res < 0) {
