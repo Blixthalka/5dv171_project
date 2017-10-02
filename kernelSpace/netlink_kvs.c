@@ -69,6 +69,7 @@ static void nl_data_ready_callback(struct sk_buff *skb) {
 }
 
 int table_put(struct kvs_msg *message, size_t length, struct nlmsghdr *nlh){
+	struct kvs_htable_entry *temp;
 	struct kvs_htable_entry *entry;
 	struct kvs_msg *send_msg;
 	send_msg = (struct kvs_msg*) kmalloc(sizeof(*send_msg),GFP_KERNEL);
@@ -94,7 +95,15 @@ int table_put(struct kvs_msg *message, size_t length, struct nlmsghdr *nlh){
 		printk(KERN_INFO "FAILED\n");
 		return -ENOMEM;
 	}
+	
 
+	hash_for_each_possible(kvs_htable,temp,hash_list,message->key){
+		if(message->key == temp->key){
+			
+		}else{
+
+		}
+	}
 	entry->key = message->key;
 	entry->value_size = length;
 	hash_add(kvs_htable, &entry->hash_list, entry->key);
