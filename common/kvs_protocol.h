@@ -1,9 +1,6 @@
 #ifndef _KVS_PROTOCOL_H
 #define _KVS_PROTOCOL_H
 
-
-#include <linux/types.h>
-
 #ifdef __KERNEL__
 #include <linux/string.h>
 #else
@@ -28,11 +25,11 @@ struct kvs_msg {
 	.value = _value,					\
 }
 
-#define CREATE_KVS_MSG_GET(_key, _value, _value_size) { 	\
+#define CREATE_KVS_MSG_GET(_key) { 				\
 	.command = KVS_COMMAND_GET,				\
 	.key = _key,						\
-	.value_size = _value_size, 				\
-	.value = _value,					\
+	.value_size = 0, 					\
+	.value = NULL,						\
 }
 
 #define CREATE_KVS_MSG_DEL(_key)  { 	 			\
@@ -56,5 +53,6 @@ void unserialize_kvs_msg(struct kvs_msg *msg, char *buf);
 size_t get_value_length(char* buf);
 
 
+void print_kvs_msg(struct kvs_msg *msg);
 
 #endif /* _KVS_PROTOCOL_H */

@@ -1,5 +1,11 @@
 #include "kvs_protocol.h"
-     
+    
+#ifdef __KERNEL__
+#include <linux/kernel.h>
+#else
+#include <stdio.h>
+#endif
+
 void serialize_kvs_msg(char *buf, struct kvs_msg *msg) 
 {
 	buf[0] = msg->command;
@@ -23,6 +29,22 @@ void unserialize_kvs_msg(struct kvs_msg *msg, char *buf)
 	memcpy(msg->value, &buf[9], msg->value_size);
 }
 
-size_t get_value_length(char* buf){
+size_t get_value_length(char* buf)
+{
 	return buf[5] << 24 | buf[6] << 16 | buf[7] <<  8 | buf[8];
+}
+
+void print_kvs_msg(struct kvs_msg *msg) 
+{
+   int i;
+#ifdef __KERNEL__
+   printk(KERN_INFO "Command: %02X, Key: %d, Value length %d.\n", msg->command, msg->key, msg->value_size);
+#else
+   printf("Command: %02X, Key: %d, Value length: %d.\n", msg->command, msg->key, msg->value_size);
+   printf("Buffer: ");
+   for(i = 0; i < msg->value_size; i++) {
+	printf("%02X", msg->value[i]);
+   }
+   printf("\n");
+#endif
 }
