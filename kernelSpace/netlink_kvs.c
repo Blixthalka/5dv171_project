@@ -53,10 +53,10 @@ void put(struct kvs_msg *msg, struct nlmsghdr *nlh){
 	struct kvs_msg send_msg;
 	if(table_put(msg)==0){
 		printk(KERN_INFO "Value %s stored on %d\n",msg->value,msg->key);
-		send_msg = CREATE_KVS_MSG_SUC();
+		send_msg = CREATE_KVS_MSG_SUC;
 	} else{
 		printk(KERN_INFO "ERROR on store\n");
-		send_msg = CREATE_KVS_MSG_ERR();
+		send_msg = CREATE_KVS_MSG_ERR;
 	}
 	send_message(&send_msg,nlh);
 }
@@ -64,10 +64,10 @@ void put(struct kvs_msg *msg, struct nlmsghdr *nlh){
 void del(struct kvs_msg *msg, struct nlmsghdr *nlh){
 	struct kvs_msg send_msg;
 	if(table_del(msg)==0){
-		send_msg = CREATE_KVS_MSG_SUC();
+		send_msg = CREATE_KVS_MSG_SUC;
 		printk(KERN_INFO "Key %d deleted\n",msg->key);
 	} else {
-		send_msg = CREATE_KVS_MSG_ERR();
+		send_msg = CREATE_KVS_MSG_ERR;
 		printk(KERN_INFO "could not find key %d\n",msg->key);
 	}
 	send_message(&send_msg,nlh);
@@ -85,7 +85,7 @@ void get(struct kvs_msg *msg, struct nlmsghdr *nlh){
 		kfree(send_msg);
 	} else {
 		printk(KERN_INFO "Could not find key %d\n",msg->key);
-		err_msg =CREATE_KVS_MSG_ERR();
+		err_msg = CREATE_KVS_MSG_ERR;
 		send_message(&err_msg,nlh);
 	}
 }
