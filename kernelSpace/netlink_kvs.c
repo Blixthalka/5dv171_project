@@ -25,8 +25,8 @@ struct kvs_htable_entry {
 
 MODULE_LICENSE("GPL");
 
-int table_put(struct kvs_msg *message, size_t length);
-int table_del(struct kvs_msg *message);
+int table_put(struct kvs_msg *message, size_t length, struct nlmsghdr *nlh);
+int table_del(struct kvs_msg *message, struct nlmsghdr *nlh);
 int table_get(struct kvs_msg *message, struct nlmsghdr *nlh);
 int send_message(struct kvs_msg *msg, struct nlmsghdr *nlh);
 
@@ -52,9 +52,9 @@ static void nl_data_ready_callback(struct sk_buff *skb) {
 
 
 	if(message->command==KVS_COMMAND_PUT){
-		table_put(message,value_length);
+		table_put(message,value_length,nlh);
 	} else if(message->command==KVS_COMMAND_DEL){
-		table_del(message);
+		table_del(message,nlh);
 	} else if(message->command==KVS_COMMAND_GET){
 		table_get(message,nlh);
 	} else{
@@ -68,44 +68,68 @@ static void nl_data_ready_callback(struct sk_buff *skb) {
 
 }
 
-int table_put(struct kvs_msg *message, size_t length){
+int table_put(struct kvs_msg *message, size_t length, struct nlmsghdr *nlh){
 	struct kvs_htable_entry *entry;
+	struct kvs_msg *send_msg;
+	send_msg = (struct kvs_msg*) kmalloc(sizeof(*send_msg),GFP_KERNEL);
+	send_msg->value_size = 0;
+
 	entry = kmalloc(sizeof(*entry),GFP_KERNEL);
 	
 	printk(KERN_INFO "storing value %s with key %u ...",message->value,message->key);
 	if(!entry){
+		send_msg->command=KVS_COMMAND_ERR;
+		send_message(send_msg,nlh);
+		kfree(send_msg);
 		printk(KERN_INFO "FAILED\n");
 		return -ENOMEM;
 	}
 	entry->value = kmalloc(length,GFP_KERNEL);
 	memcpy(entry->value,message->value,message->value_size);
 	if(!entry->value){
-		printk(KERN_INFO "FAILED\n");
+		send_msg->command=KVS_COMMAND_ERR;
+		send_message(send_msg,nlh);
+		kfree(send_msg);		
 		kfree(entry);
+		printk(KERN_INFO "FAILED\n");
 		return -ENOMEM;
 	}
 
 	entry->key = message->key;
 	entry->value_size = length;
 	hash_add(kvs_htable, &entry->hash_list, entry->key);
+	send_msg->command=KVS_COMMAND_SUC;
+	send_message(send_msg,nlh);
+	kfree(send_msg);
+
 	printk(KERN_INFO "SUCCESS\n");
 	return 0;
 
 }
 
-int table_del(struct kvs_msg *message){
+int table_del(struct kvs_msg *message, struct nlmsghdr *nlh){
 		struct kvs_htable_entry *temp;
+		struct kvs_msg *send_msg;
+		send_msg = (struct kvs_msg*)kmalloc(sizeof(send_msg),GFP_KERNEL);
+		send_msg->value_size = 0;
 
 		printk(KERN_INFO "deleting key %u ...",message->key);
 		hash_for_each_possible(kvs_htable,temp,hash_list,message->key){
 			if(message->key == temp->key){
 				hash_del(&temp->hash_list);
+				send_msg->command = KVS_COMMAND_SUC;	
+				send_message(send_msg, nlh);
 				kfree(temp->value);
 				kfree(temp);
-				printk(KERN_INFO "key deleted\n",temp->value);
+				kfree(send_msg);
+				printk(KERN_INFO "key deleted\n");
+				
 				return 0;
 			}
 		}
+		send_msg->command=KVS_COMMAND_ERR;
+		send_message(send_msg,nlh);
+		kfree(send_msg);
 		printk(KERN_INFO "did not find key\n");
 		return -1;
 }
@@ -123,7 +147,7 @@ int table_get(struct kvs_msg *message, struct nlmsghdr *nlh){
 			memcpy(send_msg->value,temp->value,temp->value_size);
 			send_msg->value_size=temp->value_size;
 			send_msg->key=temp->key;
-			send_msg->command=KVS_COMMAND_GET;
+			send_msg->command=KVS_COMMAND_SUC;
 			send_message(send_msg,nlh);
 
 			kfree(send_msg->value);
@@ -132,6 +156,13 @@ int table_get(struct kvs_msg *message, struct nlmsghdr *nlh){
 		}
 	}
 	printk(KERN_INFO "did not find key\n");
+	send_msg = (struct kvs_msg*)kmalloc(sizeof(send_msg),GFP_KERNEL);
+	send_msg->value_size=0;
+	send_msg->command=KVS_COMMAND_ERR;
+	send_msg->key=0;
+	send_message(send_msg,nlh);
+
+	kfree(send_msg);
 	return -1;
 }
 
