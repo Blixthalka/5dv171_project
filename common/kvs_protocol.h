@@ -4,6 +4,11 @@
 
 #include <linux/types.h>
 
+#ifdef __KERNEL__
+#include <linux/string.h>
+#else
+#include <string.h>
+#endif
 
 #define KVS_COMMAND_PUT 0x00
 #define KVS_COMMAND_GET 0x01
