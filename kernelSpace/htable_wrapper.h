@@ -8,6 +8,7 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/netlink.h>
+#include "../common/kvs_protocol.h"
 
 // size of the hashtable will become 2 ^ HASHTABLE_SIZE
 #define HASHTABLE_SIZE 3
@@ -21,9 +22,9 @@ struct kvs_htable_entry {
     struct hlist_node hash_list;
 };
 
-int table_put(struct kvs_msg *message, size_t length, struct nlmsghdr *nlh);
-int table_del(struct kvs_msg *message, struct nlmsghdr *nlh);
-int table_get(struct kvs_msg *message, struct nlmsghdr *nlh);
+int table_put(struct kvs_msg *message);
+int table_del(struct kvs_msg *message);
+struct kvs_msg* table_get(struct kvs_msg *message);
 
 
 
