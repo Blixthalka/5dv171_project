@@ -63,8 +63,6 @@ static void nl_data_ready_callback(struct sk_buff *skb) {
 		kfree(message);
 	}
 
-	printk(KERN_INFO
-	"Received netlink message payload: %s\n", (char *) NLMSG_DATA(nlh));
 	kfree(message->value);
 	kfree(message);
 
