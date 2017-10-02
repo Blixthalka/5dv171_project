@@ -13,9 +13,14 @@ int main() {
     struct kvs_connection connection;
     struct kvs_msg ret;
     kvs_connection_init(&connection);
-    char *value = "Chicken dinner";
+    char *value = "please";
+    char *value1 = "bitch";
     
-   // kvs_put(&connection, 1337, value, strlen(value) + 1);
+    kvs_put(&connection, 1337, value, strlen(value) + 1);
+    kvs_put(&connection, 1337, value1, strlen(value1) + 1);
+    kvs_get(&connection, 1337, &ret);
+    print_kvs_msg(&ret);
+    kvs_del(&connection, 1337);
     kvs_get(&connection, 1337, &ret);
     print_kvs_msg(&ret);
 
@@ -51,6 +56,7 @@ int kvs_put(struct kvs_connection *connection, int key, char *value, int value_s
 {
     struct kvs_msg ret;
     struct kvs_msg msg = CREATE_KVS_MSG_PUT(key, value, value_size);
+    //print_kvs_msg(&msg);
     kvs_send_msg(connection, &msg, &ret);
     free(ret.value);
     return ret.command;
@@ -80,20 +86,10 @@ void kvs_send_msg(struct kvs_connection *connection, struct kvs_msg *user_msg, s
     size_t kvs_msg_size  = sizeof(struct kvs_msg) + user_msg->value_size;
     size_t full_msg_size = sizeof(struct nlmsghdr) + kvs_msg_size;
     char *serialized_msg = (char *) malloc(kvs_msg_size);
-    int i;
-    struct kvs_msg msggg;
 
     serialize_kvs_msg(serialized_msg, user_msg);
     
-    for(i = 0; i < kvs_msg_size; i++) {
-	printf("%02X-", serialized_msg[i]);
-    }
-
-    printf("\n");
-    msggg.value = malloc(user_msg->value_size);
-    unserialize_kvs_msg(&msggg, serialized_msg);
-    printf(" %02X %d %d %s\n", msggg.command, msggg.key, msggg.value_size, msggg.value);
-
+   
     /* create netlink message header */
     nlh = (struct nlmsghdr *) malloc(full_msg_size);
     memset(nlh, 0, full_msg_size);
