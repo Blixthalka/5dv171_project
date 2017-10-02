@@ -175,20 +175,14 @@ static void netlink_test(void) {
 	// nl_sk = netlink_kernel_create(&init_net, NETLINK_NITRO, 0, nl_data_ready_callback, NULL, THIS_MODULE);
 }
 
-static int __init
-
-kvs_init(void) {
-	printk(KERN_INFO
-	"Initializing Netlink Socket");
+static int __init kvs_init(void) {
+	printk(KERN_INFO "Initializing Netlink Socket");
 	netlink_test();
 	return 0;
 }
 
-static void __exit
-
-kvs_exit(void) {
-	printk(KERN_INFO
-	"Goodbye");
+static void __exit kvs_exit(void) {
+	printk(KERN_INFO "Goodbye");
 	sock_release(nl_sk->sk_socket);
 }
 

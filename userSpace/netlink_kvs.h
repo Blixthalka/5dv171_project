@@ -18,8 +18,8 @@ void kvs_connection_init (struct kvs_connection *connection);
 void kvs_connection_close(struct kvs_connection *connection);
 
 
-void kvs_put(struct kvs_connection *connection, int key, char *value);
-void kvs_get(struct kvs_connection *connection, int key, char *value);
+void kvs_put(struct kvs_connection *connection, int key, char *value, int value_size);
+void kvs_get(struct kvs_connection *connection, int key, char *value, int value_size);
 void kvs_del(struct kvs_connection *connection, int key);
 
 /**
