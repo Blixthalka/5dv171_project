@@ -8,6 +8,14 @@
 #include "../common/kvs_protocol.h"
 #include "netlink_kvs.h"
 
+/**
+ * Sends the kvs message through the connection to the kernel, where it is handled.
+ * @param connection The connection to the kernel.
+ * @param msg The message to be sent.
+ * @param ret The message to be filled with the answer from the kvs.
+ */
+void kvs_send_msg(struct kvs_connection *connection, struct kvs_msg *user_msg, struct kvs_msg *ret);
+
 
 int main() {
     struct kvs_connection connection;
@@ -15,7 +23,9 @@ int main() {
     kvs_connection_init(&connection);
     char *value = "please";
     char *value1 = "bitch";
-    
+
+    free(NULL);
+
     kvs_put(&connection, 1337, value, strlen(value) + 1);
     kvs_put(&connection, 1337, value1, strlen(value1) + 1);
     kvs_get(&connection, 1337, &ret);
@@ -55,9 +65,8 @@ void kvs_connection_close(struct kvs_connection *connection)
 int kvs_put(struct kvs_connection *connection, int key, char *value, int value_size)
 {
     struct kvs_msg ret;
-    struct kvs_msg msg = CREATE_KVS_MSG_PUT(key, value, value_size);
-    //print_kvs_msg(&msg);
-    kvs_send_msg(connection, &msg, &ret);
+//    struct kvs_msg msg = CREATE_KVS_MSG_PUT(key, value, value_size);
+    kvs_send_msg(connection, &((struct kvs_msg) CREATE_KVS_MSG_PUT(key, value, value_size)), &ret);
     free(ret.value);
     return ret.command;
 }
@@ -79,12 +88,6 @@ int kvs_del(struct kvs_connection *connection, int key)
 }
 
 
-/**
- * Sends the kvs message through the connection to the kernel, where it is handled.
- * @param connection The connection to the kernel.
- * @param msg The message to be sent.
- * @param ret The message to be filled with the answer from the kvs.
- */
 void kvs_send_msg(struct kvs_connection *connection, struct kvs_msg *user_msg, struct kvs_msg *ret)
 {
     struct msghdr msg;
@@ -119,6 +122,7 @@ void kvs_send_msg(struct kvs_connection *connection, struct kvs_msg *user_msg, s
     recvmsg(connection->fd, &msg, 0);
     
     free(serialized_msg);
+    free(ret->value);
     
     ret->value = (char *) malloc(get_value_length((char *) NLMSG_DATA(nlh)));
     unserialize_kvs_msg(ret, (char *) NLMSG_DATA(nlh));
