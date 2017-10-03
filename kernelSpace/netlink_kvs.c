@@ -98,19 +98,21 @@ int send_message(struct kvs_msg *msg, struct nlmsghdr *nlh){
 	int pid;
 	int res;
 	size_t size;
+	size_t tot_size;
 	char* buf;
 
 	pid = nlh->nlmsg_pid;
 	size = sizeof(msg) + msg->value_size;
+	tot_size = size + sizeof(nlh);
 	buf = kmalloc(size,GFP_KERNEL);
 	serialize_kvs_msg(buf,msg);
-	skb_out = nlmsg_new(size, 0);
+	skb_out = nlmsg_new(tot_size, 0);
 	if (!skb_out) {
 		printk(KERN_ERR "Failed to allocate new skb\n");
 		return -ENOMEM;
 	}
 
-	nlh = nlmsg_put(skb_out, 0, 0, NLMSG_DONE, size, 0);
+	nlh = nlmsg_put(skb_out, 0, 0, NLMSG_DONE, tot_size, 0);
 	NETLINK_CB(skb_out).dst_group = 0; /* not in mcast group */
 	memcpy(nlmsg_data(nlh), buf, size);
 
