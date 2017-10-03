@@ -1,5 +1,5 @@
 obj-m += key_value_store.o
-key_value_store-objs := ../common/kvs_protocol.o netlink_kvs.o
+key_value_store-objs := ../common/kvs_protocol.o htable_wrapper.o netlink_kvs.o
 KVERSION := $(shell uname -r)
 PWD := $(shell pwd)
 
