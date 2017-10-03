@@ -4,6 +4,9 @@
 
 #include "htable_wrapper.h"
 
+
+DEFINE_HASHTABLE(kvs_htable, HASHTABLE_SIZE);
+
 int table_put(struct kvs_msg *message) {
 	struct kvs_htable_entry *temp;
 	struct kvs_htable_entry *entry;
@@ -36,20 +39,20 @@ int table_put(struct kvs_msg *message) {
 }
 
 
-struct kvs_msg* table_get(struct kvs_msg *message){
+struct kvs_htable_entry* table_get(struct kvs_msg *message){
 	struct kvs_htable_entry *temp;
-	struct kvs_msg *ret_msg;
+	//struct kvs_msg *ret_msg;
 
 	hash_for_each_possible(kvs_htable,temp,hash_list,message->key){
 		if(message->key == temp->key){
-			ret_msg = (struct kvs_msg*)kmalloc(sizeof(ret_msg),GFP_KERNEL);
+			/*ret_msg = (struct kvs_msg*)kmalloc(sizeof(ret_msg),GFP_KERNEL);
 			ret_msg->value = kmalloc(temp->value_size,GFP_KERNEL);
 
 			memcpy(ret_msg->value,temp->value,temp->value_size);
 			ret_msg->value_size=temp->value_size;
 			ret_msg->key=temp->key;
-			ret_msg->command=KVS_COMMAND_SUC;
-			return ret_msg;
+			ret_msg->command=KVS_COMMAND_SUC;*/
+			return temp;
 		}
 	}
 	return NULL;
