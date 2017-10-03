@@ -50,42 +50,45 @@ static void nl_data_ready_callback(struct sk_buff *skb) {
 }
 
 void put(struct kvs_msg *msg, struct nlmsghdr *nlh){
-	struct kvs_msg send_msg;
+	struct kvs_msg send_msg = CREATE_KVS_MSG_SUC();
 	if(table_put(msg)==0){
 		printk(KERN_INFO "Value %s stored on %d\n",msg->value,msg->key);
-		send_msg = CREATE_KVS_MSG_SUC;
 	} else{
 		printk(KERN_INFO "ERROR on store\n");
-		send_msg = CREATE_KVS_MSG_ERR;
+		send_msg.command = KVS_COMMAND_ERR;
 	}
 	send_message(&send_msg,nlh);
 }
 
 void del(struct kvs_msg *msg, struct nlmsghdr *nlh){
-	struct kvs_msg send_msg;
+	struct kvs_msg send_msg = CREATE_KVS_MSG_SUC();
 	if(table_del(msg)==0){
-		send_msg = CREATE_KVS_MSG_SUC;
 		printk(KERN_INFO "Key %d deleted\n",msg->key);
 	} else {
-		send_msg = CREATE_KVS_MSG_ERR;
+		send_msg.command = KVS_COMMAND_ERR;
 		printk(KERN_INFO "could not find key %d\n",msg->key);
 	}
 	send_message(&send_msg,nlh);
 }
 
 void get(struct kvs_msg *msg, struct nlmsghdr *nlh){
+	struct kvs_msg err_msg = CREATE_KVS_MSG_ERR();
 	struct kvs_msg* send_msg;
-	struct kvs_msg err_msg;
-	send_msg = table_get(msg);
-	if(send_msg != NULL){
-		printk(KERN_INFO "Retrieved value %s from key %d\n",send_msg.value,send_msg->key);
+	struct kvs_htable_entry* entry;
+	entry = table_get(msg);
+	if(entry != NULL){
+		printk(KERN_INFO "Retrieved value %s from key %d\n",entry->value,entry->key);
+		send_msg = kmalloc(sizeof(send_msg),GFP_KERNEL);
+		send_msg->value = kmalloc(sizeof(entry->value_size),GFP_KERNEL);
+		send_msg->value_size=entry->value_size;
 		send_msg->command=KVS_COMMAND_SUC;
+		memcpy(send_msg->value,entry->value,send_msg->value_size);
+		send_msg->key = entry->key;
 		send_message(send_msg,nlh);
 		kfree(send_msg->value);
 		kfree(send_msg);
 	} else {
 		printk(KERN_INFO "Could not find key %d\n",msg->key);
-		err_msg = CREATE_KVS_MSG_ERR;
 		send_message(&err_msg,nlh);
 	}
 }

@@ -45,7 +45,7 @@ struct kvs_msg {
     .value = NULL,                                          \
 }
 
-#define CREATE_KVS_MSG_SUC {                                \
+#define CREATE_KVS_MSG_SUC() {                              \
     .command = KVS_COMMAND_SUC,                             \
     .key = 0,                                               \
     .value_size = 0,                                        \
@@ -53,7 +53,7 @@ struct kvs_msg {
 }
 
 
-#define CREATE_KVS_MSG_ERR {                                \
+#define CREATE_KVS_MSG_ERR() {                              \
     .command = KVS_COMMAND_ERR,                             \
     .key = 0,                                               \
     .value_size = 0,                                        \
