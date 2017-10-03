@@ -1,33 +1,15 @@
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
-#include <linux/netlink.h>
 #include <net/sock.h>
 #include <net/net_namespace.h>
-#include "../common/kvs_protocol.h"
+#include "netlink_kvs.h"
+#include "htable_wrapper.h"
 
 # define NETLINK_KVS 17
 
-// size of the hashtable will become 2 ^ HASHTABLE_SIZE
-#define HASHTABLE_SIZE 3
-
-DEFINE_HASHTABLE(kvs_htable, HASHTABLE_SIZE);
-
-/**
- * Struct to be stored in hashtable.
- */
-struct kvs_htable_entry {
-    unsigned int key;
-    char *value;
-    size_t value_size;
-    struct hlist_node hash_list;
-};
-
 MODULE_LICENSE("GPL");
 
-int table_put(struct kvs_msg *message, size_t length, struct nlmsghdr *nlh);
-int table_del(struct kvs_msg *message, struct nlmsghdr *nlh);
-int table_get(struct kvs_msg *message, struct nlmsghdr *nlh);
 int send_message(struct kvs_msg *msg, struct nlmsghdr *nlh);
 
 static struct sock *nl_sk = NULL;
@@ -52,128 +34,63 @@ static void nl_data_ready_callback(struct sk_buff *skb) {
 
 
 	if(message->command==KVS_COMMAND_PUT){
-		table_put(message,value_length,nlh);
+		put(message,nlh);
 	} else if(message->command==KVS_COMMAND_DEL){
-		table_del(message,nlh);
+		del(message,nlh);
 	} else if(message->command==KVS_COMMAND_GET){
-		table_get(message,nlh);
+		get(message,nlh);
 	} else{
 		printk(KERN_INFO "invalid message command received");
 		kfree(message->value);
 		kfree(message);
 	}
-
 	kfree(message->value);
 	kfree(message);
 
 }
 
-int table_put(struct kvs_msg *message, size_t length, struct nlmsghdr *nlh){
-	struct kvs_htable_entry *temp;
-	struct kvs_htable_entry *entry;
-	struct kvs_msg *send_msg;
-	send_msg = (struct kvs_msg*) kmalloc(sizeof(*send_msg),GFP_KERNEL);
-	send_msg->value_size = 0;
-
-	entry = kmalloc(sizeof(*entry),GFP_KERNEL);
-	
-	printk(KERN_INFO "storing value %s with key %u ...",message->value,message->key);
-	if(!entry){
-		send_msg->command=KVS_COMMAND_ERR;
-		send_message(send_msg,nlh);
-		kfree(send_msg);
-		printk(KERN_INFO "FAILED\n");
-		return -ENOMEM;
+void put(struct kvs_msg *msg, struct nlmsghdr *nlh){
+	struct kvs_msg send_msg = CREATE_KVS_MSG_SUC();
+	if(table_put(msg)==0){
+		printk(KERN_INFO "Value %s stored on %d\n",msg->value,msg->key);
+	} else{
+		printk(KERN_INFO "ERROR on store\n");
+		send_msg.command = KVS_COMMAND_ERR;
 	}
-	entry->value = kmalloc(length,GFP_KERNEL);
-	memcpy(entry->value,message->value,message->value_size);
-	if(!entry->value){
-		send_msg->command=KVS_COMMAND_ERR;
-		send_message(send_msg,nlh);
-		kfree(send_msg);		
-		kfree(entry);
-		printk(KERN_INFO "FAILED\n");
-		return -ENOMEM;
-	}
-	
-
-	hash_for_each_possible(kvs_htable,temp,hash_list,message->key){
-		if(message->key == temp->key){
-			
-		}else{
-
-		}
-	}
-	entry->key = message->key;
-	entry->value_size = length;
-	hash_add(kvs_htable, &entry->hash_list, entry->key);
-	send_msg->command=KVS_COMMAND_SUC;
-	send_message(send_msg,nlh);
-	kfree(send_msg);
-
-	printk(KERN_INFO "SUCCESS\n");
-	return 0;
-
+	send_message(&send_msg,nlh);
 }
 
-int table_del(struct kvs_msg *message, struct nlmsghdr *nlh){
-		struct kvs_htable_entry *temp;
-		struct kvs_msg *send_msg;
-		send_msg = (struct kvs_msg*)kmalloc(sizeof(send_msg),GFP_KERNEL);
-		send_msg->value_size = 0;
-
-		printk(KERN_INFO "deleting key %u ...",message->key);
-		hash_for_each_possible(kvs_htable,temp,hash_list,message->key){
-			if(message->key == temp->key){
-				hash_del(&temp->hash_list);
-				send_msg->command = KVS_COMMAND_SUC;	
-				send_message(send_msg, nlh);
-				kfree(temp->value);
-				kfree(temp);
-				kfree(send_msg);
-				printk(KERN_INFO "key deleted\n");
-				
-				return 0;
-			}
-		}
-		send_msg->command=KVS_COMMAND_ERR;
-		send_message(send_msg,nlh);
-		kfree(send_msg);
-		printk(KERN_INFO "did not find key\n");
-		return -1;
+void del(struct kvs_msg *msg, struct nlmsghdr *nlh){
+	struct kvs_msg send_msg = CREATE_KVS_MSG_SUC();
+	if(table_del(msg)==0){
+		printk(KERN_INFO "Key %d deleted\n",msg->key);
+	} else {
+		send_msg.command = KVS_COMMAND_ERR;
+		printk(KERN_INFO "could not find key %d\n",msg->key);
+	}
+	send_message(&send_msg,nlh);
 }
 
-int table_get(struct kvs_msg *message, struct nlmsghdr *nlh){
-	struct kvs_htable_entry *temp;
-	struct kvs_msg *send_msg;
-
-	printk(KERN_INFO "getting value from key %u ...",message->key);
-	hash_for_each_possible(kvs_htable,temp,hash_list,message->key){
-		if(message->key == temp->key){
-			printk(KERN_INFO "found value %s\n",temp->value);
-			send_msg = (struct kvs_msg*)kmalloc(sizeof(send_msg),GFP_KERNEL);
-			send_msg->value = kmalloc(temp->value_size,GFP_KERNEL);
-
-			memcpy(send_msg->value,temp->value,temp->value_size);
-			send_msg->value_size=temp->value_size;
-			send_msg->key=temp->key;
-			send_msg->command=KVS_COMMAND_SUC;
-			send_message(send_msg,nlh);
-
-			kfree(send_msg->value);
-			kfree(send_msg);
-			return 0;
-		}
+void get(struct kvs_msg *msg, struct nlmsghdr *nlh){
+	struct kvs_msg err_msg = CREATE_KVS_MSG_ERR();
+	struct kvs_msg* send_msg;
+	struct kvs_htable_entry* entry;
+	entry = table_get(msg);
+	if(entry != NULL){
+		printk(KERN_INFO "Retrieved value %s from key %d\n",entry->value,entry->key);
+		send_msg = kmalloc(sizeof(send_msg),GFP_KERNEL);
+		send_msg->value = kmalloc(sizeof(entry->value_size),GFP_KERNEL);
+		send_msg->value_size=entry->value_size;
+		send_msg->command=KVS_COMMAND_SUC;
+		memcpy(send_msg->value,entry->value,send_msg->value_size);
+		send_msg->key = entry->key;
+		send_message(send_msg,nlh);
+		kfree(send_msg->value);
+		kfree(send_msg);
+	} else {
+		printk(KERN_INFO "Could not find key %d\n",msg->key);
+		send_message(&err_msg,nlh);
 	}
-	printk(KERN_INFO "did not find key\n");
-	send_msg = (struct kvs_msg*)kmalloc(sizeof(send_msg),GFP_KERNEL);
-	send_msg->value_size=0;
-	send_msg->command=KVS_COMMAND_ERR;
-	send_msg->key=0;
-	send_message(send_msg,nlh);
-
-	kfree(send_msg);
-	return -1;
 }
 
 int send_message(struct kvs_msg *msg, struct nlmsghdr *nlh){
@@ -200,7 +117,7 @@ int send_message(struct kvs_msg *msg, struct nlmsghdr *nlh){
 	res = nlmsg_unicast(nl_sk, skb_out, pid);
 	if (res < 0) {
 		printk(KERN_INFO
-		"Error while sending bak to user\n");
+		"Error while sending back to user\n");
 		kfree(buf);
 		return -1;
 	}
@@ -213,7 +130,6 @@ static void netlink_test(void) {
 		.input = nl_data_ready_callback,
 	};
 	nl_sk = netlink_kernel_create(&init_net, NETLINK_KVS, &cfg);
-	// nl_sk = netlink_kernel_create(&init_net, NETLINK_NITRO, 0, nl_data_ready_callback, NULL, THIS_MODULE);
 }
 
 static int __init kvs_init(void) {
