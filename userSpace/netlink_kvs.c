@@ -29,12 +29,10 @@ void kvs_send_msg(struct kvs_connection *connection, struct kvs_msg *user_msg, s
 int main() {
     struct kvs_connection connection;
     struct kvs_msg ret;
-    kvs_connection_init(&connection);
     char *value = "please";
     char *value1 = "bitch";
 
-    free(NULL);
-
+    kvs_connection_init(&connection);
     kvs_put(&connection, 1337, value, strlen(value) + 1);
     kvs_put(&connection, 1337, value1, strlen(value1) + 1);
     kvs_get(&connection, 1337, &ret);
@@ -42,7 +40,6 @@ int main() {
     kvs_del(&connection, 1337);
     kvs_get(&connection, 1337, &ret);
     print_kvs_msg(&ret);
-
 
     kvs_connection_close(&connection);
     return 0;
@@ -74,8 +71,8 @@ void kvs_connection_close(struct kvs_connection *connection)
 int kvs_put(struct kvs_connection *connection, int key, char *value, int value_size)
 {
     struct kvs_msg ret;
-//    struct kvs_msg msg = CREATE_KVS_MSG_PUT(key, value, value_size);
-    kvs_send_msg(connection, &((struct kvs_msg) CREATE_KVS_MSG_PUT(key, value, value_size)), &ret);
+    struct kvs_msg msg = CREATE_KVS_MSG_PUT(key, value, value_size);
+    kvs_send_msg(connection, &msg, &ret);
     free(ret.value);
     return ret.command;
 }
@@ -131,7 +128,6 @@ void kvs_send_msg(struct kvs_connection *connection, struct kvs_msg *user_msg, s
     recvmsg(connection->fd, &msg, 0);
     
     free(serialized_msg);
-    free(ret->value);
     
     ret->value = (char *) malloc(get_value_length((char *) NLMSG_DATA(nlh)));
     unserialize_kvs_msg(ret, (char *) NLMSG_DATA(nlh));
