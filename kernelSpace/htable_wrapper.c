@@ -3,7 +3,7 @@
 //
 
 #include "htable_wrapper.h"
-
+#include <asm/semaphore.h>
 
 DEFINE_HASHTABLE(kvs_htable, HASHTABLE_SIZE);
 
@@ -35,7 +35,7 @@ int table_put(struct kvs_msg *message) {
 		entry->value_size = message->value_size;
 		hash_add(kvs_htable, &entry->hash_list, entry->key);
 	}
-	return 0;
+	return 1;
 }
 
 struct kvs_htable_entry* table_get(struct kvs_msg *message){
@@ -66,6 +66,35 @@ int table_del(struct kvs_msg *message){
 		hash_del(&temp->hash_list);
 		return 0;
 	}
+}
+
+int store_table(){
+	struct kvs_htable_entry *temp;
+
+	hash_for_each_possible(kvs_htable,temp,hash_list,message->key){
+		//todo insert to file
+	}
+	return 1;
+}
+
+int load_table(){
+	struct kvs_htable_entry *entry;
+	entry = kmalloc(sizeof(*entry), GFP_KERNEL);
+	if (!entry) {
+		return -ENOMEM;
+	}
+	//TODO RETREIVE VALUE
+	/*entry->value = kmalloc(, GFP_KERNEL);
+	if (!entry->value) {
+		return -ENOMEM;
+	}
+	memcpy(entry->value, message->value, message->value_size);
+
+	entry->key = message->key;
+	entry->value_size = message->value_size;
+	hash_add(kvs_htable, &entry->hash_list, entry->key);*/
+	return 1;
+
 }
 
 

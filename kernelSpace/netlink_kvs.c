@@ -150,6 +150,7 @@ static void netlink_test(void) {
 static int __init kvs_init(void) {
 	printk(KERN_INFO "Initializing Netlink Socket");
 	netlink_test();
+	load_table();
 	return 0;
 }
 
@@ -159,6 +160,7 @@ static int __init kvs_init(void) {
 static void __exit kvs_exit(void) {
 	printk(KERN_INFO "Goodbye");
 	sock_release(nl_sk->sk_socket);
+	store_table();
 }
 
 module_init(kvs_init);

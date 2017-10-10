@@ -41,6 +41,10 @@ int table_del(struct kvs_msg *message);
  */
 struct kvs_htable_entry* table_get(struct kvs_msg *message);
 
+int store_table();
+
+int load_table();
+
 
 
 #endif //INC_5DV171_PROJECT_HTABLE_WRAPPER_H
