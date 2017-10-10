@@ -3,7 +3,6 @@
 //
 
 #include "htable_wrapper.h"
-#include <asm/semaphore.h>
 
 DEFINE_HASHTABLE(kvs_htable, HASHTABLE_SIZE);
 
@@ -69,11 +68,14 @@ int table_del(struct kvs_msg *message){
 }
 
 int store_table(){
+	int i;
 	struct kvs_htable_entry *temp;
 
-	hash_for_each_possible(kvs_htable,temp,hash_list,message->key){
-		//todo insert to file
+	hash_for_each(kvs_htable,i,temp,hash_list){
+		//todo store temp-key and value
 	}
+
+
 	return 1;
 }
 
