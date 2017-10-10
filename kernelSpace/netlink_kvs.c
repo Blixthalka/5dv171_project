@@ -14,6 +14,12 @@ int send_message(struct kvs_msg *msg, struct nlmsghdr *nlh);
 
 static struct sock *nl_sk = NULL;
 
+/**
+ * Function is called when a message is received through the netlink connection.
+ * The incoming structs is parsed to a kvs_msg and the correct hashtable function
+ * is called.
+ * @param skb
+ */
 static void nl_data_ready_callback(struct sk_buff *skb) {
 	struct nlmsghdr *nlh = NULL;
 	struct kvs_msg *message;
@@ -48,6 +54,7 @@ static void nl_data_ready_callback(struct sk_buff *skb) {
 	kfree(message);
 
 }
+
 
 void put(struct kvs_msg *msg, struct nlmsghdr *nlh){
 	struct kvs_msg send_msg = CREATE_KVS_MSG_SUC();
@@ -127,6 +134,9 @@ int send_message(struct kvs_msg *msg, struct nlmsghdr *nlh){
 	return res;
 }
 
+/**
+ * Initiates the netlink connection to the nl_data_ready_callback function.
+ */
 static void netlink_test(void) {
 	struct netlink_kernel_cfg cfg = {
 		.input = nl_data_ready_callback,
@@ -134,12 +144,18 @@ static void netlink_test(void) {
 	nl_sk = netlink_kernel_create(&init_net, NETLINK_KVS, &cfg);
 }
 
+/**
+ * Initiates the module. This function is called when module is inserted in kernel.
+ */
 static int __init kvs_init(void) {
 	printk(KERN_INFO "Initializing Netlink Socket");
 	netlink_test();
 	return 0;
 }
 
+/**
+ * Clears the module. This function i called when module is removed from kernel.
+ */
 static void __exit kvs_exit(void) {
 	printk(KERN_INFO "Goodbye");
 	sock_release(nl_sk->sk_socket);
