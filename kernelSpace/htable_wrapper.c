@@ -38,7 +38,6 @@ int table_put(struct kvs_msg *message) {
 	return 0;
 }
 
-
 struct kvs_htable_entry* table_get(struct kvs_msg *message){
 	struct kvs_htable_entry *temp;
 	//struct kvs_msg *ret_msg;

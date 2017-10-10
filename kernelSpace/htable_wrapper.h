@@ -22,9 +22,23 @@ struct kvs_htable_entry {
     size_t value_size;
     struct hlist_node hash_list;
 };
-
+/**
+ * Puts the entry from the input in the hashtable.
+ * @param message
+ * @return: 1 on success -1 on failure or error.
+ */
 int table_put(struct kvs_msg *message);
+/**
+ * deletes the entry from the input in the hashtable.
+ * @param message
+ * @return: 1 on success -1 on failure or error.
+ */
 int table_del(struct kvs_msg *message);
+/**
+ * Puts the entry from the input in the hashtable.
+ * @param message
+ * @return: An entry with the retrieved value.
+ */
 struct kvs_htable_entry* table_get(struct kvs_msg *message);
 
 
