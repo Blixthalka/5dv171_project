@@ -67,7 +67,7 @@ int table_del(struct kvs_msg *message){
 	}
 }
 
-int store_table(){
+int store_htable(void){
 	int i;
 	struct kvs_htable_entry *temp;
 
@@ -79,7 +79,7 @@ int store_table(){
 	return 1;
 }
 
-int load_table(){
+int load_htable(void){
 	struct kvs_htable_entry *entry;
 	entry = kmalloc(sizeof(*entry), GFP_KERNEL);
 	if (!entry) {

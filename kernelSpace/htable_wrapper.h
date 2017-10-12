@@ -41,9 +41,9 @@ int table_del(struct kvs_msg *message);
  */
 struct kvs_htable_entry* table_get(struct kvs_msg *message);
 
-int store_table();
+int store_htable(void);
 
-int load_table();
+int load_htable(void);
 
 
 
