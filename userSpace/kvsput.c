@@ -5,8 +5,7 @@
 
 int main(int argc, char *argv[]) {
     struct kvs_connection connection;
-    struct kvs_msg ret;
-
+    int ret;
     if(argc != 3) {
         printf("Usage: %s key value\n", argv[0]);
         return 1;
@@ -16,13 +15,12 @@ int main(int argc, char *argv[]) {
     char *value = argv[2];
 
     kvs_connection_init(&connection);
-    kvs_put(&connection, key, value, strlen(value) + 1);
-    if(ret.command == KVS_COMMAND_SUC) {
-        printf("Value: %s\n", ret.value);
+    ret = kvs_put(&connection, key, value, strlen(value) + 1);
+    if(ret == KVS_COMMAND_SUC) {
+        printf("Successfully added value at key %d.\n", key);
     } else {
-        printf("Error fetching value.\n");
+        printf("Error inserting value.\n");
     }
-    free(ret.value);
     kvs_connection_close(&connection);
 
     return 0;
