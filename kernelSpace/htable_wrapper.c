@@ -94,13 +94,15 @@ int store_htable(void){
 		if (temp != NULL) {
 			size = temp->value_size + sizeof(msg);
 			data = kmalloc(size, GFP_KERNEL);
+			msg.value = kmalloc(temp->value_size);
 			memcpy(msg.value, temp->value, temp->value_size);
 			msg.key = temp->key;
 			serialize_kvs_msg(data, &msg);
 
 			file_write(temp_file, offset, data, size);
 			offset += size;
-			free(data);
+			kfree(data);
+			kfree(msg.value);
 		} else {
 			printk("temp is null"
 			KERN_INFO);
