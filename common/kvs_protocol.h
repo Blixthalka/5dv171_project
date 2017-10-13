@@ -15,8 +15,6 @@
 #define KVS_COMMAND_GET 0x01
 #define KVS_COMMAND_DEL 0x02
 
-
-
 struct kvs_msg {
     char command;
     int key;
