@@ -58,7 +58,7 @@ static void nl_data_ready_callback(struct sk_buff *skb) {
 
 void put(struct kvs_msg *msg, struct nlmsghdr *nlh){
 	struct kvs_msg send_msg = CREATE_KVS_MSG_SUC();
-	if(table_put(msg)==0){
+	if(table_put(msg)==1){
 		printk(KERN_INFO "Value %s stored on %d\n",msg->value,msg->key);
 	} else{
 		printk(KERN_INFO "ERROR on store\n");
