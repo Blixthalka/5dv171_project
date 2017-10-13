@@ -98,6 +98,7 @@ int store_htable(void){
 
 		file_write(temp_file,offset,data,size);
 		offset += size;
+		free(data);
 	}
 	file_close(temp_file);
 
