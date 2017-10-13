@@ -8,4 +8,7 @@ set(SOURCE  netlink_kvs.c
             ../common/kvs_protocol.h)
 
 
-add_executable(kvsget kvsget.c ${SOURCE})
+# build the executables kvsget, kvsput and kvsdel
+add_executable(kvs-get kvsget.c ${SOURCE})
+add_executable(kvs-put kvsput.c ${SOURCE})
+add_executable(kvs-del kvsdel.c ${SOURCE})
