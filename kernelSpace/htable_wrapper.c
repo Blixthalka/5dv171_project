@@ -89,16 +89,22 @@ int store_htable(void){
 
 	temp_file = open_file("/home/.kvs",O_CREAT,S_IRWXU);
 
-	hash_for_each(kvs_htable,i,temp,hash_list){
-		size = temp->value_size + sizeof(msg);
-		data = kmalloc(size,GFP_KERNEL);
-		memcpy(msg.value,temp->value,temp->value_size);
-		msg.key = temp->key;
-		serialize_kvs_msg(data,&msg);
+	hash_for_each(kvs_htable,i,temp,hash_list)
+	{
+		if (temp != NULL) {
+			size = temp->value_size + sizeof(msg);
+			data = kmalloc(size, GFP_KERNEL);
+			memcpy(msg.value, temp->value, temp->value_size);
+			msg.key = temp->key;
+			serialize_kvs_msg(data, &msg);
 
-		file_write(temp_file,offset,data,size);
-		offset += size;
-		free(data);
+			file_write(temp_file, offset, data, size);
+			offset += size;
+			free(data);
+		} else {
+			printk("temp is null"
+			KERN_INFO);
+		}
 	}
 	file_close(temp_file);
 
