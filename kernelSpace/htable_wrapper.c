@@ -87,14 +87,14 @@ int store_htable(void){
 	unsigned long long size;
 	msg.command = KVS_COMMAND_PUT;
 
-	temp_file = open_file("/home/.kvs",O_CREATE,S_IRWXU);
+	temp_file = open_file("/home/.kvs",O_CREAT,S_IRWXU);
 
 	hash_for_each(kvs_htable,i,temp,hash_list){
 		size = temp->value_size + sizeof(msg);
-		data = malloc(size);
+		data = kmalloc(size,GFP_KERNEL);
 		memcpy(msg.value,temp->value,temp->value_size);
 		msg.key = temp->key;
-		serialize_kvs_msg(data,msg);
+		serialize_kvs_msg(data,&msg);
 
 		file_write(temp_file,offset,data,size);
 		offset += size;
