@@ -73,6 +73,8 @@ int table_del(struct kvs_msg *message){
 		return -1;
 	} else {
 		hash_del(&temp->hash_list);
+		kfree(temp->value);
+		kfree(temp);
 		return 0;
 	}
 }
@@ -102,8 +104,9 @@ int store_htable(void){
 			memcpy(msg->value, temp->value, temp->value_size);
 			serialize_kvs_msg(data, msg);
 
-			//file_write(temp_file, offset, data, size);
+			file_write(temp_file, offset, data, size);
 			offset += size;
+			table_del(msg);
 			kfree(data);
 			kfree(msg->value);
 			kfree(msg);
@@ -113,6 +116,7 @@ int store_htable(void){
 			KERN_INFO);
 		}
 	}
+	file_sync(temp_file);
 	file_close(temp_file);
 
 	return 1;
@@ -181,7 +185,6 @@ int file_write(struct file *file, unsigned long long offset, unsigned char *data
 
 	oldfs = get_fs();
 	set_fs(get_ds());
-
 	ret = vfs_write(file, data, size, &offset);
 
 	set_fs(oldfs);
