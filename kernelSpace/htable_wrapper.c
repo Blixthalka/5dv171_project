@@ -90,13 +90,23 @@ int store_htable(void){
 	char *data;
 	unsigned long long offset=0;
 	unsigned long long size;
-	struct file *file;
-	int fd;
+	struct file *filp;
+	mm_segment_t fs;
+	filp = filp_open(filename, o_rdwr|o_append, 0644);
+	if(is_err(filp))
+	{
+		printk("open error...\n");
+		return;
+	}
 
-	mm_segment_t old_fs = get_fs();
-	set_fs(KERNEL_DS);
+	fs=get_fs();
+	set_fs(kernel_ds);
 
-	fd = sys_open(STORE_FILE, O_WRONLY|O_CREAT, 0644);
+
+}
+
+
+	//fd = sys_open(STORE_FILE, O_WRONLY|O_CREAT, 0644);
 	//temp_file = open_file("/home/.kvs",O_CREAT,777);
 
 	hash_for_each(kvs_htable,i,temp,hash_list)
@@ -112,7 +122,8 @@ int store_htable(void){
 			memcpy(msg->value, temp->value, temp->value_size);
 			serialize_kvs_msg(data, msg);
 
-			write_file(temp_file, offset, data, size,fd);
+			filp->f_op->write(filp, data, size,&filp->f_pos);
+			//write_file(temp_file, offset, data, size,fd);
 			offset += size;
 			table_del(msg);
 			kfree(data);
@@ -123,9 +134,8 @@ int store_htable(void){
 			printk(KERN_INFO "temp is null");
 		}
 	}
-	fput(file);
-	sys_close(fd);
-	set_fs(old_fs);
+	set_fs(fs);
+	filp_close(filp,null);
 	return 1;
 }
 
