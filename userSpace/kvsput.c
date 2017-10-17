@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
     if(ret == KVS_COMMAND_SUC) {
         printf("Successfully added value at key %d.\n", key);
     } else {
-        printf("Error inserting value.\n");
+        printf("Error putting value.\n");
     }
     kvs_connection_close(&connection);
 
