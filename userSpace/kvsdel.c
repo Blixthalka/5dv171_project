@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
     if(r == KVS_COMMAND_SUC) {
         printf("Deleted value at key %d.", key);
     } else {
-        printf("Error deleting value.\n");
+        fprintf(stderr, "Error deleting value.\n");
     }
     kvs_connection_close(&connection);
 

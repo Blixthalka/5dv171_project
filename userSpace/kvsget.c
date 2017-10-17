@@ -18,9 +18,9 @@ int main(int argc, char *argv[]) {
     kvs_connection_init(&connection);
     r = kvs_get(&connection, key, &ret);
     if(r == KVS_COMMAND_SUC) {
-        printf("Value: %s\n", ret.value);
+        printf("%s\n", ret.value);
     } else {
-        printf("Error getting value.\n");
+        fprintf(stderr, "Error getting value.\n");
     }
     free(ret.value);
     kvs_connection_close(&connection);

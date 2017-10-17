@@ -17,9 +17,9 @@ int main(int argc, char *argv[]) {
     kvs_connection_init(&connection);
     ret = kvs_put(&connection, key, value, strlen(value) + 1);
     if(ret == KVS_COMMAND_SUC) {
-        printf("Successfully added value at key %d.\n", key);
+        printf("Successfully added %s at key %d.\n", value, key);
     } else {
-        printf("Error putting value.\n");
+        fprintf(stderr, "Error putting value.\n");
     }
     kvs_connection_close(&connection);
 
