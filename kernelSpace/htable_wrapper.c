@@ -6,6 +6,7 @@
 #include <linux/file.h>
 #include <linux/fs.h>
 #include <linux/mm.h>
+#include <linux/stat.h>
 
 DEFINE_HASHTABLE(kvs_htable, HASHTABLE_SIZE);
 #define STORE_FILE "/.kvs"
@@ -124,21 +125,25 @@ int store_htable(void){
 }
 
 int load_htable(void){
-	struct kvs_htable_entry *entry;
-	entry = kmalloc(sizeof(*entry), GFP_KERNEL);
-	if (!entry) {
-		return -ENOMEM;
-	}
-	//TODO RETREIVE VALUE
-	/*entry->value = kmalloc(, GFP_KERNEL);
-	if (!entry->value) {
-		return -ENOMEM;
-	}
-	memcpy(entry->value, message->value, message->value_size);
+	struct file *filp=NULL;
+	struct kstat *stat = kmalloc(sizeof(stat),GFP_KERNEL);
+	long long size;
+	char* data;
 
-	entry->key = message->key;
-	entry->value_size = message->value_size;
-	hash_add(kvs_htable, &entry->hash_list, entry->key);*/
+	filp=open_file(STORE_FILE,O_RDWR,0644);
+	if(IS_ERR(filp)){
+		printk(KERN_INFO "Could not open file\n");
+	}
+	vfs_stat(STORE_FILE,stat);
+	size=stat->size;
+	printk(KERN_INFO "size of file = %ll\n",size);
+	//data = kmalloc(size, GFP_KERNEL);
+	//file_read(filp,0,data,size);
+
+
+
+	//TODO RETREIVE VALUE
+
 	return 1;
 
 }
