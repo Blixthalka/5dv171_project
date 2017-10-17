@@ -85,7 +85,7 @@ int store_htable(void){
 	unsigned long long size;
 
 
-	temp_file = open_file("/home/.kvs",O_CREAT,S_IRWXU);
+	temp_file = open_file("/home/.kvs",O_CREAT,777);
 
 	hash_for_each(kvs_htable,i,temp,hash_list)
 	{
