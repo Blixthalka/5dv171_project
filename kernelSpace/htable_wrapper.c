@@ -126,27 +126,59 @@ int store_htable(void){
 
 int load_htable(void){
 	struct file *filp=NULL;
-	struct kstat *stat = kmalloc(sizeof(stat),GFP_KERNEL);
-	long long size;
-	char* data;
+	char *data;
+	int data_size = 0;
+	int read_size = 0;
+	struct kvs_msg *msg;
 
-	filp=open_file(STORE_FILE,O_RDWR,0644);
-	if(IS_ERR(filp)){
+	filp = open_file(STORE_FILE, O_RDWR, 0644);
+	if(IS_ERR(filp)) {
 		printk(KERN_INFO "Could not open file\n");
 	}
-	vfs_stat(STORE_FILE,stat);
-	size=stat->size;
-	printk(KERN_INFO "size of file = %ll\n",size);
-	//data = kmalloc(size, GFP_KERNEL);
-	//file_read(filp,0,data,size);
 
 
+	data_size = read_file_to_buffer(filp, data);
 
-	//TODO RETREIVE VALUE
+	while(read_size < data_size) {
+		msg = kmalloc(sizeof(msg), GFP_KERNEL);
+		msg->value = kmalloc(get_value_length(data));
 
+		unserialize_kvs_msg(msg, &data[read_size]);
+		read_size += sizeof(msg) + msg->value_size;
+
+		table_put(msg);
+
+		kfree(msg->value);
+		kfree(msg);
+	}
+
+	kfree(data);
+	file_close(filp);
 	return 1;
 
 }
+
+static int read_file_to_buffer(struct file *filp, char *data) {
+	char* data = kmalloc(0, GFP_KERNEL);
+	int read_amt = 4096;
+	int ret;
+	int iter = 0;
+
+	do {
+		krealloc(data, read_amt + read_amt * iter, GFP_KERNEL);
+		ret = file_read(filp, read_amt * iter, &data[iter * read_amt], read_amt);
+
+		if(ret < 0) {
+			kfree(data);
+			return -1;
+		}
+
+		iter++;
+	} while (ret == read_amt);
+
+	return 	data_size = ret + read_amt * iter;
+}
+
 
 struct file *open_file(const char *path, int flags, int rights){
 	struct file *filp = NULL;
