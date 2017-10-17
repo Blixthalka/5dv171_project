@@ -73,6 +73,8 @@ int table_del(struct kvs_msg *message){
 		return -1;
 	} else {
 		hash_del(&temp->hash_list);
+		kfree(temp->value);
+		kfree(temp);
 		return 0;
 	}
 }
@@ -80,12 +82,12 @@ int table_del(struct kvs_msg *message){
 int store_htable(void){
 	int i;
 	struct kvs_htable_entry *temp;
-	struct kvs_msg msg;
+	struct kvs_msg *msg;
 	char *data;
 	struct file *temp_file;
 	unsigned long long offset=0;
 	unsigned long long size;
-	msg.command = KVS_COMMAND_PUT;
+
 
 	temp_file = open_file("/home/.kvs",O_CREAT,S_IRWXU);
 
@@ -94,20 +96,26 @@ int store_htable(void){
 		if (temp != NULL) {
 			size = temp->value_size + sizeof(msg);
 			data = kmalloc(size, GFP_KERNEL);
-			msg.value = kmalloc(temp->value_size,GFP_KERNEL);
-			msg.value_size = temp->value_size;
-			memcpy(msg.value, temp->value, temp->value_size);
-			msg.key = temp->key;
-			serialize_kvs_msg(data, &msg);
+			msg = kmalloc(sizeof(msg),GFP_KERNEL);
+			msg->command = KVS_COMMAND_PUT;
+			msg->value_size = temp->value_size;
+			msg->key = temp->key;
+			msg->value = kmalloc(temp->value_size,GFP_KERNEL);
+			memcpy(msg->value, temp->value, temp->value_size);
+			serialize_kvs_msg(data, msg);
 
-			//file_write(temp_file, offset, data, size);
+			file_write(temp_file, offset, data, size);
 			offset += size;
+			table_del(msg);
 			kfree(data);
-			kfree(msg.value);
+			kfree(msg->value);
+			kfree(msg);
+
 		} else {
 			printk(KERN_INFO "temp is null");
 		}
 	}
+	file_sync(temp_file);
 	file_close(temp_file);
 
 	return 1;
@@ -176,7 +184,6 @@ int file_write(struct file *file, unsigned long long offset, unsigned char *data
 
 	oldfs = get_fs();
 	set_fs(get_ds());
-
 	ret = vfs_write(file, data, size, &offset);
 
 	set_fs(oldfs);
