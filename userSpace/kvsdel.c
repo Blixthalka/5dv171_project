@@ -5,6 +5,7 @@
 
 int main(int argc, char *argv[]) {
     struct kvs_connection connection;
+    int r;
 
     if(argc != 2) {
         printf("Usage: %s key\n", argv[0]);
@@ -15,7 +16,7 @@ int main(int argc, char *argv[]) {
 
 
     kvs_connection_init(&connection);
-    int ret = kvs_del(&connection, key);
+    int r = kvs_del(&connection, key);
     if(ret == KVS_COMMAND_SUC) {
         printf("Deleted value at key %d.", key);
     } else {

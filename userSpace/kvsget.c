@@ -6,6 +6,7 @@
 int main(int argc, char *argv[]) {
     struct kvs_connection connection;
     struct kvs_msg ret;
+    int r
 
     if(argc != 2) {
         printf("Usage: %s key\n", argv[0]);
@@ -15,8 +16,8 @@ int main(int argc, char *argv[]) {
     int key = atoi(argv[1]);
 
     kvs_connection_init(&connection);
-    kvs_get(&connection, key, &ret);
-    if(ret.command == KVS_COMMAND_SUC) {
+    r = kvs_get(&connection, key, &ret);
+    if(r == KVS_COMMAND_SUC) {
         printf("Value: %s\n", ret.value);
     } else {
         printf("Error fetching value.\n");

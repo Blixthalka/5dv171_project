@@ -105,8 +105,7 @@ int store_htable(void){
 			kfree(data);
 			kfree(msg.value);
 		} else {
-			printk("temp is null"
-			KERN_INFO);
+			printk(KERN_INFO "temp is null");
 		}
 	}
 	file_close(temp_file);
