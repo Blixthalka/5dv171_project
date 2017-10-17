@@ -1,7 +1,3 @@
-//
-// Created by Emil Vannebäck on 2017-10-02.
-//
-
 #ifndef INC_5DV171_PROJECT_HTABLE_WRAPPER_H
 #define INC_5DV171_PROJECT_HTABLE_WRAPPER_H
 #include <linux/init.h>

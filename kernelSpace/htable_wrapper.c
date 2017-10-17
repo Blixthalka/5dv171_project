@@ -1,7 +1,3 @@
-//
-// Created by Emil Vannebäck on 2017-10-02.
-//
-
 #include "htable_wrapper.h"
 #include <linux/fs.h>
 #include <asm/segment.h>
