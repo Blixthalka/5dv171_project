@@ -9,6 +9,7 @@
 #include <linux/buffer_head.h>
 #include <linux/file.h>
 #include <linux/fs.h>
+#include <linux/mm.h>
 
 DEFINE_HASHTABLE(kvs_htable, HASHTABLE_SIZE);
 const char* STORE_FILE = "/.kvs";
@@ -91,15 +92,15 @@ int store_htable(void){
 	unsigned long long size;
 	struct file *filp;
 	mm_segment_t fs;
-	filp = filp_open(filename, o_rdwr|o_append, 0644);
-	if(is_err(filp))
+	filp = filp_open(STORE_FILE, O_RDWR|O_APPEND, 0644);
+	if(IS_ERR(filp))
 	{
 		printk("open error...\n");
-		return;
+		return 1;
 	}
 
 	fs=get_fs();
-	set_fs(kernel_ds);
+	set_fs(get_ds());
 
 	//temp_file = open_file("/home/.kvs",O_CREAT,777);
 
@@ -129,7 +130,7 @@ int store_htable(void){
 		}
 	}
 	set_fs(fs);
-	filp_close(filp,null);
+	filp_close(filp,NULL);
 	return 1;
 }
 
