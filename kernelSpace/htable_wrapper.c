@@ -16,7 +16,6 @@ struct file *open_file(const char *path, int flags, int rights);
 void file_close(struct file *file);
 int file_read(struct file *file, unsigned long long offset, unsigned char *data, unsigned int size);
 int file_write(struct file *file, unsigned long long offset, unsigned char *data, unsigned int size);
-void write_file(struct file *file, unsigned long long offset, unsigned char *data, unsigned int size, int fd);
 int file_sync(struct file *file);
 
 
@@ -102,11 +101,6 @@ int store_htable(void){
 	fs=get_fs();
 	set_fs(kernel_ds);
 
-
-}
-
-
-	//fd = sys_open(STORE_FILE, O_WRONLY|O_CREAT, 0644);
 	//temp_file = open_file("/home/.kvs",O_CREAT,777);
 
 	hash_for_each(kvs_htable,i,temp,hash_list)
@@ -123,7 +117,7 @@ int store_htable(void){
 			serialize_kvs_msg(data, msg);
 
 			filp->f_op->write(filp, data, size,&filp->f_pos);
-			//write_file(temp_file, offset, data, size,fd);
+
 			offset += size;
 			table_del(msg);
 			kfree(data);
@@ -206,19 +200,6 @@ int file_write(struct file *file, unsigned long long offset, unsigned char *data
 
 	set_fs(oldfs);
 	return ret;
-}
-
-void write_file(struct file *file, unsigned long long offset, unsigned char *data, unsigned int size, int fd)
-{
-	if (fd >= 0) {
-		sys_write(fd, data, size);
-		file = fget(fd);
-		if (file) {
-			vfs_write(file, data, size, &offset);
-			fput(file);
-		}
-
-	}
 }
 
 
