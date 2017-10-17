@@ -8,7 +8,7 @@
 #include <linux/mm.h>
 
 DEFINE_HASHTABLE(kvs_htable, HASHTABLE_SIZE);
-#define STORE_FILE = "/.kvs";
+#define STORE_FILE "/.kvs"
 struct file *open_file(const char *path, int flags, int rights);
 void file_close(struct file *file);
 int file_read(struct file *file, unsigned long long offset, unsigned char *data, unsigned int size);
@@ -88,8 +88,8 @@ int store_htable(void){
 	char *data;
 	unsigned long long offset=0;
 	unsigned long long size;
-	//struct file *filp;
-	mm_segment_t fs;
+	struct file *filp=NULL;
+/*	mm_segment_t fs;
 
 	filp = filp_open(STORE_FILE, O_RDWR|O_CREAT, 0644);
 	if(IS_ERR(filp))
@@ -104,7 +104,7 @@ int store_htable(void){
 
 	//temp_file = open_file("/home/.kvs",O_CREAT,777);
 
-	/*hash_for_each(kvs_htable,i,temp,hash_list)
+	hash_for_each(kvs_htable,i,temp,hash_list)
 	{
 		if (temp != NULL) {
 			size = temp->value_size + sizeof(msg);
@@ -128,13 +128,22 @@ int store_htable(void){
 		} else {
 			printk(KERN_INFO "temp is null");
 		}
-	}*/
+	}
 
 	char *buff = "tester";
 	filp->f_op->write(filp, buff, strlen(buff), &filp->f_pos);
 	set_fs(fs);
 	if(filp)
-		filp_close(filp,NULL);
+		filp_close(filp,NULL);*/
+	
+	char *buf = "test\n";
+	char* buf2= "append\n";
+	filp=open_file(STORE_FILE,O_CREAT|O_RDWR,0644);
+	file_write(filp,offset,buf,strlen(buf));
+	offset += strlen(buf);
+	file_write(filp,offset,buf2,strlen(buf2));
+	file_sync(filp);
+	file_close(filp);
 	return 1;
 }
 
