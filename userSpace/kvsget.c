@@ -6,7 +6,7 @@
 int main(int argc, char *argv[]) {
     struct kvs_connection connection;
     struct kvs_msg ret;
-    int r
+    int r;
 
     if(argc != 2) {
         printf("Usage: %s key\n", argv[0]);

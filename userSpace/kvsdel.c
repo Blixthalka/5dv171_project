@@ -16,8 +16,8 @@ int main(int argc, char *argv[]) {
 
 
     kvs_connection_init(&connection);
-    int r = kvs_del(&connection, key);
-    if(ret == KVS_COMMAND_SUC) {
+    r = kvs_del(&connection, key);
+    if(r == KVS_COMMAND_SUC) {
         printf("Deleted value at key %d.", key);
     } else {
         printf("Error fetching value.\n");
