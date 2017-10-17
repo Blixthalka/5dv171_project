@@ -89,20 +89,10 @@ int store_htable(void){
 	unsigned long long offset=0;
 	unsigned long long size;
 	struct file *filp=NULL;
-/*	mm_segment_t fs;
+	
+	
+	filp=open_file(STORE_FILE,O_CREAT|O_RDWR,0644);
 
-	filp = filp_open(STORE_FILE, O_RDWR|O_CREAT, 0644);
-	if(IS_ERR(filp))
-	{
-		printk("open error...\n");
-		return 1;
-	}
-
-
-	fs=get_fs();
-	set_fs(get_ds());
-
-	//temp_file = open_file("/home/.kvs",O_CREAT,777);
 
 	hash_for_each(kvs_htable,i,temp,hash_list)
 	{
@@ -117,8 +107,7 @@ int store_htable(void){
 			memcpy(msg->value, temp->value, temp->value_size);
 			serialize_kvs_msg(data, msg);
 
-			filp->f_op->write(filp, data, size,&filp->f_pos);
-
+			file_write(filp,offset,data,size);
 			offset += size;
 			table_del(msg);
 			kfree(data);
@@ -129,19 +118,6 @@ int store_htable(void){
 			printk(KERN_INFO "temp is null");
 		}
 	}
-
-	char *buff = "tester";
-	filp->f_op->write(filp, buff, strlen(buff), &filp->f_pos);
-	set_fs(fs);
-	if(filp)
-		filp_close(filp,NULL);*/
-	
-	char *buf = "test\n";
-	char* buf2= "append\n";
-	filp=open_file(STORE_FILE,O_CREAT|O_RDWR,0644);
-	file_write(filp,offset,buf,strlen(buf));
-	offset += strlen(buf);
-	file_write(filp,offset,buf2,strlen(buf2));
 	file_sync(filp);
 	file_close(filp);
 	return 1;
