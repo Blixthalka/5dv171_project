@@ -112,8 +112,7 @@ int store_htable(void){
 			kfree(msg);
 
 		} else {
-			printk("temp is null"
-			KERN_INFO);
+			printk(KERN_INFO "temp is null");
 		}
 	}
 	file_sync(temp_file);
