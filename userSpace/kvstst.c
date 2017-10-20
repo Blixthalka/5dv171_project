@@ -13,7 +13,7 @@ void test(int offset);
 
 int main(int argc, char *argv[]) {
     pid_t processes[CONCURRENT_PROCESSES];
-    printf("Starting tests...");
+    printf("Starting tests...\n");
 
     for (int i = 0; i < CONCURRENT_PROCESSES; i++) {
         processes[i] = fork();
