@@ -8,7 +8,7 @@
 #include "../common/kvs_protocol.h"
 
 // size of the hashtable will become 2 ^ HASHTABLE_SIZE
-#define HASHTABLE_SIZE 14
+#define HASHTABLE_SIZE 3
 
 //DEFINE_HASHTABLE(kvs_htable, HASHTABLE_SIZE);
 
@@ -18,7 +18,6 @@ struct kvs_htable_entry {
     size_t value_size;
     struct hlist_node hash_list;
 };
-
 /**
  * Puts the entry from the input in the hashtable.
  * @param message
