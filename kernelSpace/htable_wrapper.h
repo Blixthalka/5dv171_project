@@ -7,10 +7,10 @@
 #include <linux/hashtable.h>
 #include "../common/kvs_protocol.h"
 
+#define STORE_FILE "/.kvs"
 // size of the hashtable will become 2 ^ HASHTABLE_SIZE
-#define HASHTABLE_SIZE 3
+#define HASHTABLE_SIZE 14
 
-//DEFINE_HASHTABLE(kvs_htable, HASHTABLE_SIZE);
 
 struct kvs_htable_entry {
     unsigned int key;
@@ -37,8 +37,17 @@ int table_del(struct kvs_msg *message);
  */
 struct kvs_htable_entry* table_get(struct kvs_msg *message);
 
+/**
+ * Store all the data in the current hashtable to the file defined in STORE_FILE.
+ * @return
+ */
 int store_htable(void);
 
+
+/**
+ * Load data from the file defined in STORE_FILE and inserts it into the hashtable.
+ * @return
+ */
 int load_htable(void);
 
 

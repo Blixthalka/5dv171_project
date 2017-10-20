@@ -3,26 +3,14 @@
 #include <asm/segment.h>
 #include <asm/uaccess.h>
 #include <linux/buffer_head.h>
-#include <linux/file.h>
-#include <linux/fs.h>
-#include <linux/mm.h>
-#include <linux/stat.h>
 
 DEFINE_HASHTABLE(kvs_htable, HASHTABLE_SIZE);
-#define STORE_FILE "/.kvs"
-struct file *open_file(const char *path, int flags, int rights);
-void file_close(struct file *file);
-int file_read(struct file *file, unsigned long long offset, unsigned char *data, unsigned int size);
-int file_write(struct file *file, unsigned long long offset, unsigned char *data, unsigned int size);
-int file_sync(struct file *file);
-static int read_file_to_buffer(struct file *filp, char **);
 
-
-int table_put(struct kvs_msg *message) {
+int htable_put(struct kvs_msg *message) {
 	struct kvs_htable_entry *temp;
 	struct kvs_htable_entry *entry;
 
-	temp = table_get(message);
+	temp = htable_get(message);
 	if(temp!=NULL){
 		kfree(temp->value);
 		temp->value = kmalloc(message->value_size,GFP_KERNEL);
@@ -41,7 +29,6 @@ int table_put(struct kvs_msg *message) {
 			return -ENOMEM;
 		}
 		memcpy(entry->value, message->value, message->value_size);
-
 		entry->key = message->key;
 		entry->value_size = message->value_size;
 		hash_add_rcu(kvs_htable, &entry->hash_list, entry->key);
@@ -49,28 +36,20 @@ int table_put(struct kvs_msg *message) {
 	return 1;
 }
 
-struct kvs_htable_entry* table_get(struct kvs_msg *message){
+struct kvs_htable_entry* htable_get(struct kvs_msg *message){
 	struct kvs_htable_entry *temp;
-	//struct kvs_msg *ret_msg;
 
 	hash_for_each_possible_rcu(kvs_htable,temp,hash_list,message->key){
 		if(message->key == temp->key){
-			/*ret_msg = (struct kvs_msg*)kmalloc(sizeof(ret_msg),GFP_KERNEL);
-			ret_msg->value = kmalloc(temp->value_size,GFP_KERNEL);
-
-			memcpy(ret_msg->value,temp->value,temp->value_size);
-			ret_msg->value_size=temp->value_size;
-			ret_msg->key=temp->key;
-			ret_msg->command=KVS_COMMAND_SUC;*/
 			return temp;
 		}
 	}
 	return NULL;
 }
 
-int table_del(struct kvs_msg *message){
+int htable_del(struct kvs_msg *message){
 	struct kvs_htable_entry *temp;
-	temp = table_get(message);
+	temp = htable_get(message);
 	if(temp==NULL){
 		return -1;
 	} else {
@@ -81,8 +60,7 @@ int table_del(struct kvs_msg *message){
 	}
 }
 
-
-int store_htable(void){
+int htable_store(void){
 	int i;
 	struct kvs_htable_entry *temp;
 	struct kvs_msg *msg;
@@ -92,7 +70,7 @@ int store_htable(void){
 	struct file *filp=NULL;
 	
 	
-	filp=open_file(STORE_FILE,O_CREAT|O_RDWR,0644);
+	filp=file_open(STORE_FILE,O_CREAT|O_RDWR,0644);
 
 
 	hash_for_each_rcu(kvs_htable,i,temp,hash_list)
@@ -110,7 +88,7 @@ int store_htable(void){
 
 			file_write(filp,offset,data,size);
 			offset += size;
-			table_del(msg);
+			htable_del(msg);
 			kfree(data);
 			kfree(msg->value);
 			kfree(msg);
@@ -124,17 +102,17 @@ int store_htable(void){
 	return 1;
 }
 
-int load_htable(void){
+int htable_load(void){
 	struct file *filp 	= NULL;
 	char *data 		= NULL;
 	int data_size 		= 0;
 	int read_size 		= 0;
 	struct kvs_msg *msg;
 
-	filp = open_file(STORE_FILE, O_RDWR, 0644);
+	filp = file_open(STORE_FILE, O_RDWR, 0644);
 	if(IS_ERR(filp) || !filp) {
 		printk(KERN_INFO "Could not open file\n");
-		return 1;
+		return -1;
 	}
 
 
@@ -148,7 +126,7 @@ int load_htable(void){
 		unserialize_kvs_msg(msg, &data[read_size]);
 		read_size += sizeof(msg) + msg->value_size;
 
-		table_put(msg);
+		htable_put(msg);
 
 		kfree(msg->value);
 		kfree(msg);
@@ -160,83 +138,6 @@ int load_htable(void){
 
 }
 
-static int read_file_to_buffer(struct file *filp, char **data) {
-	int read_amt = 4096;
-	int ret;
-	int iter = 0;
-
-	*data = kmalloc(0, GFP_KERNEL);
-	do {
-		*data = krealloc(*data, read_amt + read_amt * iter, GFP_KERNEL);
-		ret = file_read(filp, read_amt * iter, &(*data)[iter * read_amt], read_amt);
-
-		if(ret < 0) {
-			kfree(data);
-			return -1;
-		}
-
-		iter++;
-	} while (ret == read_amt);
-
-	return ret + read_amt * (iter - 1);
-}
-
-
-struct file *open_file(const char *path, int flags, int rights){
-	struct file *filp = NULL;
-	mm_segment_t oldfs;
-	int err = 0;
-
-	oldfs = get_fs();
-	set_fs(get_ds());
-	filp = filp_open(path, flags, rights);
-	set_fs(oldfs);
-	if (IS_ERR(filp)) {
-		err = PTR_ERR(filp);
-		return NULL;
-	}
-	return filp;
-
-}
-
-void file_close(struct file *file)
-{
-	filp_close(file, NULL);
-}
-
-int file_read(struct file *file, unsigned long long offset, unsigned char *data, unsigned int size)
-{
-	mm_segment_t oldfs;
-	int ret;
-
-	oldfs = get_fs();
-	set_fs(get_ds());
-
-	ret = vfs_read(file, data, size, &offset);
-
-	set_fs(oldfs);
-	return ret;
-}
-
-int file_write(struct file *file, unsigned long long offset, unsigned char *data, unsigned int size)
-{
-	mm_segment_t oldfs;
-	int ret;
-
-	oldfs = get_fs();
-	set_fs(get_ds());
-	ret = vfs_write(file, data, size, &offset);
-
-	set_fs(oldfs);
-	return ret;
-}
-
-
-int file_sync(struct file *file)
-{
-	vfs_fsync(file, 0);
-	return 0;
-}
 
 
 
