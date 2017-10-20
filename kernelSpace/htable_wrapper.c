@@ -43,7 +43,7 @@ int table_put(struct kvs_msg *message) {
 
 		entry->key = message->key;
 		entry->value_size = message->value_size;
-		hash_add(kvs_htable, &entry->hash_list, entry->key);
+		hash_add_rcu(kvs_htable, &entry->hash_list, entry->key);
 	}
 	return 1;
 }
@@ -52,7 +52,7 @@ struct kvs_htable_entry* table_get(struct kvs_msg *message){
 	struct kvs_htable_entry *temp;
 	//struct kvs_msg *ret_msg;
 
-	hash_for_each_possible(kvs_htable,temp,hash_list,message->key){
+	hash_for_each_possible_rcu(kvs_htable,temp,hash_list,message->key){
 		if(message->key == temp->key){
 			/*ret_msg = (struct kvs_msg*)kmalloc(sizeof(ret_msg),GFP_KERNEL);
 			ret_msg->value = kmalloc(temp->value_size,GFP_KERNEL);
@@ -73,7 +73,7 @@ int table_del(struct kvs_msg *message){
 	if(temp==NULL){
 		return -1;
 	} else {
-		hash_del(&temp->hash_list);
+		hash_del_rcu(&temp->hash_list);
 		kfree(temp->value);
 		kfree(temp);
 		return 0;
@@ -95,7 +95,7 @@ int store_htable(void){
 	filp=open_file(STORE_FILE,O_CREAT|O_RDWR,0644);
 
 
-	hash_for_each(kvs_htable,i,temp,hash_list)
+	hash_for_each_rcu(kvs_htable,i,temp,hash_list)
 	{
 		if (temp != NULL) {
 			size = temp->value_size + sizeof(msg);
