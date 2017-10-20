@@ -15,6 +15,7 @@ void file_close(struct file *file);
 int file_read(struct file *file, unsigned long long offset, unsigned char *data, unsigned int size);
 int file_write(struct file *file, unsigned long long offset, unsigned char *data, unsigned int size);
 int file_sync(struct file *file);
+static int read_file_to_buffer(struct file *filp, char **);
 
 
 int table_put(struct kvs_msg *message) {
@@ -80,7 +81,6 @@ int table_del(struct kvs_msg *message){
 	}
 }
 
-static struct file *filp = NULL;
 
 int store_htable(void){
 	int i;
@@ -125,23 +125,25 @@ int store_htable(void){
 }
 
 int load_htable(void){
-	struct file *filp=NULL;
-	char *data;
-	int data_size = 0;
-	int read_size = 0;
+	struct file *filp 	= NULL;
+	char *data 		= NULL;
+	int data_size 		= 0;
+	int read_size 		= 0;
 	struct kvs_msg *msg;
 
 	filp = open_file(STORE_FILE, O_RDWR, 0644);
-	if(IS_ERR(filp)) {
+	if(IS_ERR(filp) || !filp) {
 		printk(KERN_INFO "Could not open file\n");
+		return 1;
 	}
 
 
-	data_size = read_file_to_buffer(filp, data);
+	data_size = read_file_to_buffer(filp, &data);
+	printk(KERN_INFO "DATA_SIZE: %d\n", data_size);
 
 	while(read_size < data_size) {
 		msg = kmalloc(sizeof(msg), GFP_KERNEL);
-		msg->value = kmalloc(get_value_length(data));
+		msg->value = kmalloc(get_value_length(&data[read_size]), GFP_KERNEL);
 
 		unserialize_kvs_msg(msg, &data[read_size]);
 		read_size += sizeof(msg) + msg->value_size;
@@ -158,15 +160,15 @@ int load_htable(void){
 
 }
 
-static int read_file_to_buffer(struct file *filp, char *data) {
-	char* data = kmalloc(0, GFP_KERNEL);
+static int read_file_to_buffer(struct file *filp, char **data) {
 	int read_amt = 4096;
 	int ret;
 	int iter = 0;
 
+	*data = kmalloc(0, GFP_KERNEL);
 	do {
-		krealloc(data, read_amt + read_amt * iter, GFP_KERNEL);
-		ret = file_read(filp, read_amt * iter, &data[iter * read_amt], read_amt);
+		*data = krealloc(*data, read_amt + read_amt * iter, GFP_KERNEL);
+		ret = file_read(filp, read_amt * iter, &(*data)[iter * read_amt], read_amt);
 
 		if(ret < 0) {
 			kfree(data);
@@ -176,7 +178,7 @@ static int read_file_to_buffer(struct file *filp, char *data) {
 		iter++;
 	} while (ret == read_amt);
 
-	return 	data_size = ret + read_amt * iter;
+	return ret + read_amt * (iter - 1);
 }
 
 
