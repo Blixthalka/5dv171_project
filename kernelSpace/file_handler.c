@@ -4,11 +4,11 @@
 
 #include "file_handler.h"
 #include <linux/fs.h>
-#include <asm/uaccess.h>
-#include <linux/buffer_head.h>
+#include <linux/slab.h>
 #include <linux/file.h>
 #include <linux/mm.h>
 #include <linux/stat.h>
+#include <asm/uaccess.h>
 
 int read_file_to_buffer(struct file *filp, char **data) {
 	int read_amt = 4096;

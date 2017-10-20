@@ -1,4 +1,5 @@
 #include "htable_wrapper.h"
+#include "file_handler.h"
 #include <linux/fs.h>
 #include <asm/segment.h>
 #include <asm/uaccess.h>

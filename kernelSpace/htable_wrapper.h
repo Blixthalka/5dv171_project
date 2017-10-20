@@ -23,32 +23,32 @@ struct kvs_htable_entry {
  * @param message
  * @return: 1 on success -1 on failure or error.
  */
-int table_put(struct kvs_msg *message);
+int htable_put(struct kvs_msg *message);
 /**
  * deletes the entry from the input in the hashtable.
  * @param message
  * @return: 1 on success -1 on failure or error.
  */
-int table_del(struct kvs_msg *message);
+int htable_del(struct kvs_msg *message);
 /**
  * Puts the entry from the input in the hashtable.
  * @param message
  * @return: An entry with the retrieved value.
  */
-struct kvs_htable_entry* table_get(struct kvs_msg *message);
+struct kvs_htable_entry* htable_get(struct kvs_msg *message);
 
 /**
  * Store all the data in the current hashtable to the file defined in STORE_FILE.
  * @return
  */
-int store_htable(void);
+int htable_store(void);
 
 
 /**
  * Load data from the file defined in STORE_FILE and inserts it into the hashtable.
  * @return
  */
-int load_htable(void);
+int htable_load(void);
 
 
 
