@@ -10,7 +10,13 @@
 
 MODULE_LICENSE("GPL");
 
-int send_message(struct kvs_msg *msg, struct nlmsghdr *nlh);
+/**
+ * Sends a message back to the userspace address which sent the request.
+ * @param msg: The message to send.
+ * @param nlh: the nlmsghdr struct used to send message throgh netlink.
+ * @return
+ */
+static int send_message(struct kvs_msg *msg, struct nlmsghdr *nlh);
 
 static struct sock *nl_sk = NULL;
 
@@ -58,7 +64,7 @@ static void nl_data_ready_callback(struct sk_buff *skb) {
 
 void put(struct kvs_msg *msg, struct nlmsghdr *nlh){
 	struct kvs_msg send_msg = CREATE_KVS_MSG_SUC();
-	if(table_put(msg)==1){
+	if(htable_put(msg)==1){
 		printk(KERN_INFO "Value %s stored on %d\n",msg->value,msg->key);
 	} else{
 		printk(KERN_INFO "ERROR on store\n");
@@ -69,7 +75,7 @@ void put(struct kvs_msg *msg, struct nlmsghdr *nlh){
 
 void del(struct kvs_msg *msg, struct nlmsghdr *nlh){
 	struct kvs_msg send_msg = CREATE_KVS_MSG_SUC();
-	if(table_del(msg)==0){
+	if(htable_del(msg)==0){
 		printk(KERN_INFO "Key %d deleted\n",msg->key);
 	} else {
 		send_msg.command = KVS_COMMAND_ERR;
@@ -82,7 +88,7 @@ void get(struct kvs_msg *msg, struct nlmsghdr *nlh){
 	struct kvs_msg err_msg = CREATE_KVS_MSG_ERR();
 	struct kvs_msg* send_msg;
 	struct kvs_htable_entry* entry;
-	entry = table_get(msg);
+	entry = htable_get(msg);
 	if(entry != NULL){
 		printk(KERN_INFO "Retrieved value %s from key %d\n",entry->value,entry->key);
 		send_msg = kmalloc(sizeof(send_msg),GFP_KERNEL);
@@ -137,7 +143,7 @@ int send_message(struct kvs_msg *msg, struct nlmsghdr *nlh){
 /**
  * Initiates the netlink connection to the nl_data_ready_callback function.
  */
-static void netlink_test(void) {
+static void netlink_init(void) {
 	struct netlink_kernel_cfg cfg = {
 		.input = nl_data_ready_callback,
 	};
@@ -149,8 +155,8 @@ static void netlink_test(void) {
  */
 static int __init kvs_init(void) {
 	printk(KERN_INFO "Initializing Netlink Socket");
-	netlink_test();
-	load_htable();
+	netlink_init();
+	htable_load();
 	return 0;
 }
 
@@ -159,7 +165,7 @@ static int __init kvs_init(void) {
  */
 static void __exit kvs_exit(void) {
 	printk(KERN_INFO "Goodbye");
-	store_htable();
+	htable_load();
 	sock_release(nl_sk->sk_socket);
 }
 
