@@ -6,7 +6,7 @@
 #include <string.h>
 #include "netlink_kvs.h"
 
-#define CONCURRENT_PROCESSES 10
+#define CONCURRENT_PROCESSES 30
 #define TEST_ITERATIONS 100
 
 void test(int offset);
@@ -14,8 +14,9 @@ void test(int offset);
 int main(int argc, char *argv[]) {
     pid_t processes[CONCURRENT_PROCESSES];
     printf("Starting tests...");
+    fflush(stdout);
 
-    for (int i = 0; i < CONCURRENT_PROCESSES; i++) {
+    for (int i = 1; i < CONCURRENT_PROCESSES; i++) {
         processes[i] = fork();
 
         if (processes[i] == 0) {
@@ -40,6 +41,7 @@ int main(int argc, char *argv[]) {
 void test(int offset) {
     struct kvs_connection connection;
     pid_t pid = getpid();
+    fflush(stdout);
 
     kvs_connection_init(&connection);
 
@@ -60,9 +62,9 @@ void test(int offset) {
         kvs_get(&connection, key, &ret);
 
         if(strcmp(value, ret.value) == 0) {
-            printf("%8s: %d", "ERROR", key);
+            printf("%8s: %d\n", "ERROR", key);
         }  else {
-            printf("%8s: %d", "SUCCESS", key);
+            printf("%8s: %d\n", "SUCCESS", key);
         }
         fflush(stdout);
 
