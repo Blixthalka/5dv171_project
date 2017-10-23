@@ -106,4 +106,6 @@ void kvs_send_msg(struct kvs_connection *connection, struct kvs_msg *user_msg, s
 
     ret->value = (char *) malloc(get_value_length((char *) NLMSG_DATA(nlh)));
     unserialize_kvs_msg(ret, (char *) NLMSG_DATA(nlh));
+
+    free(nlh);
 }
