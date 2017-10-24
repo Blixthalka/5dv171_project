@@ -7,7 +7,7 @@
 #include <time.h>
 #include "netlink_kvs.h"
 
-#define CONCURRENT_PROCESSES_MAX 30
+#define CONCURRENT_PROCESSES_MAX 100
 #define TEST_ITERATIONS 10000
 
 void test(int offset);
@@ -15,10 +15,9 @@ void test(int offset);
 int main(int argc, char *argv[]) {
     pid_t processes[CONCURRENT_PROCESSES_MAX];
     
-    for(int proc_iter = 0; proc_iter < CONCURRENT_PROCESSES_MAX; proc_iter++) {
-        time_t start, stop;
-
-        time(&start);
+    for(int proc_iter = 2; proc_iter < CONCURRENT_PROCESSES_MAX; proc_iter++) {
+        clock_t start, stop;
+        start = clock();
 
         for (int i = 1; i < proc_iter; i++) {
             processes[i] = fork();
@@ -38,10 +37,11 @@ int main(int argc, char *argv[]) {
             waitpid(processes[i], NULL, 0);
         }
 
-        time(&stop);
+        stop = clock();
 
-        printf("%d,%f\n", proc_iter, difftime(start, stop));
-        fflush(stdout);
+        printf("%d,%f\n", proc_iter, ((double)(stop - start)) / CLOCKS_PER_SEC);
+        fprintf(stderr, "%d\n", proc_iter);
+	fflush(stdout);
     }
     return 0;
 }
