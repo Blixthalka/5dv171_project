@@ -4,36 +4,45 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <string.h>
+#include <time.h>
 #include "netlink_kvs.h"
 
-#define CONCURRENT_PROCESSES 30
-#define TEST_ITERATIONS 100
+#define CONCURRENT_PROCESSES_MAX 30
+#define TEST_ITERATIONS 10000
 
 void test(int offset);
 
 int main(int argc, char *argv[]) {
-    pid_t processes[CONCURRENT_PROCESSES];
-    printf("Starting tests...\n");
-    fflush(stdout);
+    pid_t processes[CONCURRENT_PROCESSES_MAX];
+    
+    for(int proc_iter = 0; proc_iter < CONCURRENT_PROCESSES_MAX; proc_iter++) {
+        time_t start, stop;
 
-    for (int i = 1; i < CONCURRENT_PROCESSES; i++) {
-        processes[i] = fork();
+        time(&start);
 
-        if (processes[i] == 0) {
-            // this is the child, run test and exit
-            test(i);
-            exit(0);
-        } else if (processes[i] > 0) {
-        } else {
-            printf("fork() failed.\n Exiting...\n");
-            exit(-1);
+        for (int i = 1; i < proc_iter; i++) {
+            processes[i] = fork();
+
+            if (processes[i] == 0) {
+                // this is the child, run test and exit
+                test(i);
+                exit(0);
+            } else if (processes[i] > 0) {
+            } else {
+                printf("fork() failed.\n Exiting...\n");
+                exit(-1);
+            }
         }
-    }
 
-    for (int i = 0; i < CONCURRENT_PROCESSES; i++) {
-        waitpid(processes[i], NULL, 0);
-    }
+        for (int i = 0; i < proc_iter; i++) {
+            waitpid(processes[i], NULL, 0);
+        }
 
+        time(&stop);
+
+        printf("%d,%f\n", proc_iter, difftime(start, stop));
+        fflush(stdout);
+    }
     return 0;
 }
 
@@ -61,12 +70,12 @@ void test(int offset) {
 
         kvs_get(&connection, key, &ret);
 
-        if(strcmp(value, ret.value) == 0) {
-            printf("%8s: %d\n", "ERROR", key);
-        }  else {
-            printf("%8s: %d\n", "SUCCESS", key);
-        }
-        fflush(stdout);
+//        if(strcmp(value, ret.value) == 0) {
+//            printf("%8s: %d\n", "ERROR", key);
+//        }  else {
+//            printf("%8s: %d\n", "SUCCESS", key);
+//        }
+//        fflush(stdout);
 
         free(ret.value);
     }
