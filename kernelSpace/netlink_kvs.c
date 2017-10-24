@@ -165,7 +165,7 @@ static int __init kvs_init(void) {
  */
 static void __exit kvs_exit(void) {
 	printk(KERN_INFO "Goodbye");
-	htable_load();
+	htable_store();
 	sock_release(nl_sk->sk_socket);
 }
 
