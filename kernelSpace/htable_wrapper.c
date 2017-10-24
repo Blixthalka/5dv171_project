@@ -118,7 +118,10 @@ int htable_load(void){
 
 
 	data_size = read_file_to_buffer(filp, &data);
-	printk(KERN_INFO "DATA_SIZE: %d\n", data_size);
+	if(data_size < 0){
+		file_close(filp);
+		return -1;
+	}
 
 	while(read_size < data_size) {
 		msg = kmalloc(sizeof(msg), GFP_KERNEL);
@@ -136,7 +139,6 @@ int htable_load(void){
 	kfree(data);
 	file_close(filp);
 	return 1;
-
 }
 
 
