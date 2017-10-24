@@ -7,7 +7,7 @@
 #include <time.h>
 #include "netlink_kvs.h"
 
-#define CONCURRENT_PROCESSES_MAX 100
+#define CONCURRENT_PROCESSES_MAX 300
 #define TEST_ITERATIONS 10000
 
 void test(int offset);
